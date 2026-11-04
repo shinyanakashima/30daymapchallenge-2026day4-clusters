@@ -8,7 +8,7 @@ const ids = new Set([10001, 10007, 10035]);
 describe('urlState', () => {
   it('往復しても同じ設定になる', () => {
     const s: AppSettings = {
-      edition: '2010',
+      edition: '2014',
       lang: 'ja',
       epsKm: 62,
       minPts: 4,
@@ -57,9 +57,10 @@ describe('urlState', () => {
 
 describe('版の切り替え', () => {
   it('距離の指定がなければ版ごとの初期値', () => {
-    expect(parseSettings('?v=1&ed=2010', kinds, ids).epsKm).toBe(25);
-    expect(parseSettings('?v=1', kinds, ids).epsKm).toBe(40);
-    expect(parseSettings('?v=1&ed=2010&d=40', kinds, ids).epsKm).toBe(40);
-    expect(parseSettings('?v=1&ed=1999', kinds, ids).edition).toBe('2014');
+    expect(parseSettings('?v=1', kinds, ids).epsKm).toBe(25);
+    expect(parseSettings('?v=1', kinds, ids).edition).toBe('2010');
+    expect(parseSettings('?v=1&ed=2014', kinds, ids).epsKm).toBe(40);
+    expect(parseSettings('?v=1&ed=2014&d=25', kinds, ids).epsKm).toBe(25);
+    expect(parseSettings('?v=1&ed=1999', kinds, ids).edition).toBe('2010');
   });
 });

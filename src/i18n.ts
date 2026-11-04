@@ -110,10 +110,10 @@ const en = {
   minPtsUnit: 'spots',
   minPtsHint: 'The spot itself counts.',
   editionLabel: 'Tourism resource data',
-  edition2014: '2014 edition',
-  edition2010: '2010 edition (for comparison)',
-  edition2014Hint: 'National Land Numerical Information, ver. 2.2 (as of 30 Sep 2014). 35 spots in Hokkaido.',
-  edition2010Hint: 'Ver. 2.0 (compiled in FY2010). 141 spots in Hokkaido, mostly natural sites. The selection criteria differ, so the counts are not directly comparable.',
+  edition2014: '2014 edition (35 spots)',
+  edition2010: '2010 edition (141 spots)',
+  edition2014Hint: 'Ver. 2.2 (as of 30 Sep 2014). Newer, but only 35 spots in Hokkaido. The selection criteria differ from ver. 2.0, so the counts are not directly comparable.',
+  edition2010Hint: 'National Land Numerical Information, ver. 2.0 (compiled in FY2010). 141 spots in Hokkaido, mostly natural sites. An older dataset; it does not show the current situation.',
   menuImport: 'Add spots (GeoJSON)',
   menuShare: 'Copy a link to this view',
   menuExport: 'Save image (PNG)',
@@ -145,6 +145,8 @@ const en = {
   distanceInput: 'Distance that counts as near (km)',
   distanceButton: (v: number) => `Distance that counts as near: ${v} km. Click to type a value`,
   distanceTitle: 'Click to type a value',
+  distanceDecrease: 'Shorter by 1 km',
+  distanceIncrease: 'Longer by 1 km',
   // guide
   guideSteps: [
     {
@@ -273,10 +275,10 @@ const ja: Dict = {
   minPtsUnit: '地点',
   minPtsHint: 'その地点自身も数に含めます。',
   editionLabel: '観光資源データの版',
-  edition2014: '2014年版',
-  edition2010: '2010年版（比較用）',
-  edition2014Hint: '国土数値情報 第2.2版（基準日 2014年9月30日）。北海道は35地点です。',
-  edition2010Hint: '第2.0版（2010年度作成）。北海道は141地点で、自然資源が中心です。収録の基準が違うため、件数はそのまま比べられません。',
+  edition2014: '2014年版（35地点）',
+  edition2010: '2010年版（141地点）',
+  edition2014Hint: '第2.2版（基準日 2014年9月30日）。新しい版ですが、北海道は35地点です。第2.0版とは収録の基準が違うため、件数はそのまま比べられません。',
+  edition2010Hint: '国土数値情報 第2.0版（2010年度作成）。北海道は141地点で、自然資源が中心です。古いデータで、現在の状況を示すものではありません。',
   menuImport: '地点を追加する（GeoJSON）',
   menuShare: '設定のURLをコピー',
   menuExport: '画像（PNG）を保存',
@@ -308,6 +310,8 @@ const ja: Dict = {
   distanceInput: '近所とみなす距離（km）',
   distanceButton: (v) => `近所とみなす距離 ${v}km。押すと数値で入力できます`,
   distanceTitle: '押すと数値で入力',
+  distanceDecrease: '1km 短くする',
+  distanceIncrease: '1km 長くする',
   guideSteps: [
     {
       title: 'まとめると、どんなエリアが見える？',

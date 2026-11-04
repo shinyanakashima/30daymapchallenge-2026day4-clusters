@@ -289,7 +289,16 @@ a { color: var(--accent); }
 .dist-range::-moz-range-thumb { width: 26px; height: 26px; border-radius: 50%; background: radial-gradient(circle at 32% 28%, #fff 0 14%, rgba(255, 255, 255, 0) 42%), radial-gradient(circle, rgba(255, 255, 255, 0.92) 50%, rgba(160, 215, 255, 0.95) 66%, rgba(214, 160, 255, 0.95) 80%, rgba(255, 170, 215, 0.95) 92%); border: 1.5px solid #fff; box-shadow: 0 3px 12px rgba(25, 40, 70, 0.35); }
 .dist-range:focus-visible::-moz-range-thumb { box-shadow: 0 0 0 4px rgba(47, 127, 200, 0.35); }
 /* 距離の数値: 大きく出し、変わるときはカウントして弾む。押すと数値入力 */
-.dist-value { display: inline-flex; align-items: baseline; gap: 3px; min-width: 96px; justify-content: flex-end; }
+.dist-value { display: inline-flex; align-items: baseline; gap: 3px; justify-content: flex-end; }
+.dist-step {
+  flex: none; align-self: center; width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--line-2);
+  background: #fff; color: var(--ink); font-size: 18px; font-weight: 700; line-height: 1; cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center; touch-action: manipulation; user-select: none;
+  box-shadow: 0 1px 4px rgba(25, 40, 70, 0.15); margin: 0 4px;
+}
+.dist-step:hover:not(:disabled) { background: var(--surface); border-color: var(--accent); color: var(--accent); }
+.dist-step:active:not(:disabled) { transform: scale(0.94); }
+.dist-step:disabled { opacity: 0.35; cursor: default; }
 .dist-number {
   border: 0; background: transparent; padding: 0 2px; cursor: text; font-variant-numeric: tabular-nums;
   font-size: 34px; font-weight: 800; line-height: 1; letter-spacing: -0.01em; color: var(--ink);
@@ -377,7 +386,9 @@ a { color: var(--accent); }
 .is-mobile .dist-range { width: 100%; }
 .is-mobile .dist-value input { font-size: 24px; width: 60px; }
 .is-mobile .dist-number { font-size: 28px; }
-.is-mobile .dist-value { min-width: 78px; }
+.is-mobile .dist-value { min-width: 0; }
+.is-mobile .dist-step { width: 32px; height: 32px; margin: 0 2px; }
+.is-mobile .dist-range { min-width: 0; }
 .is-mobile .control-bar .bar-sep { display: none; }
 .is-mobile .bar-button { padding: 6px 7px; font-size: 12.5px; }
 .is-mobile .bar-more { padding: 6px 9px; }

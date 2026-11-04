@@ -413,8 +413,8 @@ export function Overlay(p: Props) {
                   <div className="seg" role="radiogroup" aria-label={t.editionLabel}>
                     {(
                       [
-                        ['2014', t.edition2014],
                         ['2010', t.edition2010],
+                        ['2014', t.edition2014],
                       ] as const
                     ).map(([key, label]) => (
                       <button key={key} type="button" role="radio" aria-checked={settings.edition === key} onClick={() => p.onEdition(key)}>
@@ -423,9 +423,7 @@ export function Overlay(p: Props) {
                     ))}
                   </div>
                   <p className="field-hint">
-                    {settings.edition === '2014'
-                      ? t.edition2014Hint
-                      : t.edition2010Hint}
+                    {settings.edition === '2014' ? t.edition2014Hint : t.edition2010Hint}
                   </p>
                 </div>
                 <button type="button" className="menu-item" onClick={() => setPop('import')}>
@@ -648,6 +646,7 @@ function DistanceControl({ value, onChange, compact, bubbleLayer }: { value: num
         />
       </div>
       <span className="dist-value">
+        <StepButton dir={-1} value={value} onChange={onChange} label={t.distanceDecrease} />
         {editing ? (
           <input
             type="number"
@@ -679,8 +678,61 @@ function DistanceControl({ value, onChange, compact, bubbleLayer }: { value: num
           </button>
         )}
         <span className="unit">km</span>
+        <StepButton dir={1} value={value} onChange={onChange} label={t.distanceIncrease} />
       </span>
     </>
+  );
+}
+
+/**
+ * 距離を 1km ずつ動かすボタン。押し続けると少し待ってから連続で進む。
+ * キーボード (Enter / Space) では 1 回ずつ。
+ */
+function StepButton({ dir, value, onChange, label }: { dir: 1 | -1; value: number; onChange: (v: number) => void; label: string }) {
+  const valueRef = useRef(value);
+  valueRef.current = value;
+  const timers = useRef<{ wait?: number; repeat?: number }>({});
+  const step = () => {
+    const next = Math.min(EPS_MAX, Math.max(EPS_MIN, valueRef.current + dir));
+    if (next !== valueRef.current) {
+      valueRef.current = next;
+      onChange(next);
+    }
+  };
+  const stop = () => {
+    window.clearTimeout(timers.current.wait);
+    window.clearInterval(timers.current.repeat);
+  };
+  useEffect(() => stop, []);
+  const disabled = dir < 0 ? value <= EPS_MIN : value >= EPS_MAX;
+  return (
+    <button
+      type="button"
+      className="dist-step"
+      aria-label={label}
+      title={label}
+      disabled={disabled}
+      onPointerDown={(e) => {
+        if (e.button !== 0) return;
+        e.preventDefault();
+        // 押している間は指・マウスが少しずれても離したことにしない
+        e.currentTarget.setPointerCapture?.(e.pointerId);
+        step();
+        stop();
+        timers.current.wait = window.setTimeout(() => {
+          timers.current.repeat = window.setInterval(step, 110);
+        }, 420);
+      }}
+      onPointerUp={stop}
+      onPointerCancel={stop}
+      onClick={(e) => {
+        // マウス・タッチは pointerdown で処理済み。キーボード操作のときだけ (detail === 0) ここで進める
+        if (e.detail === 0) step();
+      }}
+      onContextMenu={(e) => e.preventDefault()}
+    >
+      {dir < 0 ? '−' : '+'}
+    </button>
   );
 }
 

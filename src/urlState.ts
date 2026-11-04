@@ -12,8 +12,8 @@ export const DEFAULT_EPS: Record<Edition, number> = { '2014': 40, '2010': 25 };
 
 export const DEFAULTS: AppSettings = {
   lang: 'en',
-  edition: '2014',
-  epsKm: 40,
+  edition: '2010',
+  epsKm: 25,
   minPts: 3,
   cat: { type: 'all' },
   sel: null,
@@ -68,9 +68,9 @@ function parseMap(raw: string | null): MapPos | null {
   return { lon, lat, zoom };
 }
 
-/** URL の版 (ed)。未知の値は 2014。 */
+/** URL の版 (ed)。標準は件数の多い 2010年度版。未知の値も 2010。 */
 export function parseEdition(search: string): Edition {
-  return new URLSearchParams(search).get('ed') === '2010' ? '2010' : '2014';
+  return new URLSearchParams(search).get('ed') === '2014' ? '2014' : '2010';
 }
 
 /** URL から設定を読む。未知・不正な値はその項目だけ初期値に戻す。 */
@@ -103,7 +103,7 @@ export function parseSettings(search: string, validKinds: ReadonlySet<string>, v
 export function serializeSettings(s: AppSettings): string {
   const q = new URLSearchParams();
   q.set('v', SCHEMA_VERSION);
-  if (s.edition !== '2014') q.set('ed', s.edition);
+  if (s.edition !== '2010') q.set('ed', s.edition);
   if (s.lang === 'ja') q.set('lang', 'ja');
   q.set('d', String(s.epsKm));
   q.set('m', String(s.minPts));

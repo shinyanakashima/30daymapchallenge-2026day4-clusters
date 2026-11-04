@@ -31,7 +31,7 @@ const FONT = '"Hiragino Sans", "Noto Sans JP", "Yu Gothic", "Meiryo", sans-serif
 const TXT = {
   en: {
     credit2014: 'Data: National Land Numerical Information, Tourism Resources ver. 2.2 (MLIT Japan), as of 30 Sep 2014, non-commercial use',
-    credit2010: 'Data: National Land Numerical Information, Tourism Resources ver. 2.0 (MLIT Japan), FY2010 (for comparison), non-commercial use',
+    credit2010: 'Data: National Land Numerical Information, Tourism Resources ver. 2.0 (MLIT Japan), compiled in FY2010, non-commercial use',
     userData: (n: number) => ` + ${n} spots added by the user`,
     tileNight: 'Base map: GSI Vector Tiles (coastlines, roads) / Terrain: Terrain Tiles (Mapzen and others)',
     tileSat: 'Imagery: Sentinel-2 cloudless (EOX, contains modified Copernicus Sentinel data 2016) / GSI Tiles (seamless photo) / GSI Vector Tiles',
@@ -52,7 +52,7 @@ const TXT = {
   },
   ja: {
     credit2014: '出典：国土数値情報（観光資源 第2.2版）国土交通省／基準日 2014年9月30日／非商用利用',
-    credit2010: '出典：国土数値情報（観光資源 第2.0版）国土交通省／2010年度作成（比較用）／非商用利用',
+    credit2010: '出典：国土数値情報（観光資源 第2.0版）国土交通省／2010年度作成／非商用利用',
     userData: (n: number) => `＋利用者の追加データ ${n} 地点`,
     tileNight: '背景：地理院ベクトルタイル（海岸線・道路）／地形：Terrain Tiles（Mapzen ほか）',
     tileSat: '背景：Sentinel-2 cloudless（EOX, Copernicus Sentinel data 2016）／地理院タイル（全国最新写真）／地理院ベクトルタイル',

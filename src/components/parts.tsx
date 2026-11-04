@@ -185,7 +185,7 @@ function AboutJa({ data }: { data: LoadedData }) {
   return (
     <footer className="about">
       <p>
-        北海道では、観光客の地域偏在や、二次交通による周遊のしづらさが課題とされています。この地図では{data.manifest.edition === '2010' ? '2010年度版（比較用）' : '2014年版'}の観光資源データを距離でグループ化し、行政界を越えた「一緒に巡る候補」を探ります。まとまりは代表位置間の距離に基づくもので、実際の交通アクセスや周遊実績を示すものではありません。
+        北海道では、観光客の地域偏在や、二次交通による周遊のしづらさが課題とされています。この地図では{data.manifest.edition === '2010' ? '2010年度版' : '2014年版'}の観光資源データを距離でグループ化し、行政界を越えた「一緒に巡る候補」を探ります。まとまりは代表位置間の距離に基づくもので、実際の交通アクセスや周遊実績を示すものではありません。
       </p>
       <p className="credit">
         出典：
@@ -258,7 +258,7 @@ function AboutEn({ data }: { data: LoadedData }) {
     <footer className="about" lang="en">
       <p>
         Hokkaido faces an uneven distribution of visitors and limited secondary transport for touring between sites. This map groups tourism resources by distance
-        ({is2010 ? '2010 edition, for comparison' : '2014 edition'}) to look for “places to visit together” across municipal borders. Clusters are based only on
+        ({is2010 ? '2010 edition' : '2014 edition'}) to look for “places to visit together” across municipal borders. Clusters are based only on
         straight-line distances between representative points; they do not show actual transport access or travel patterns.
       </p>
       <p className="credit">
