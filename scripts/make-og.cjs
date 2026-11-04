@@ -13,7 +13,7 @@ const { chromium } = require('playwright');
   await page.evaluate(() => {
     const el = document.createElement('div');
     el.className = 'og-title';
-    el.innerHTML = '<b>Shabon Hokkaido</b><i>How Near Is Near?</i><span>Clustering Hokkaido’s tourist spots by distance / #30DayMapChallenge Day 4 Clusters</span>';
+    el.innerHTML = '<b>Shabon Hokkaido</b><i>How Near Is Near?</i><span>Kawaii clusters of Hokkaido’s tourist spots / #30DayMapChallenge Day 4 Clusters</span>';
     document.querySelector('.map-card').appendChild(el);
   });
   await page.waitForTimeout(300);

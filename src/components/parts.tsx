@@ -239,7 +239,7 @@ function AboutJa({ data }: { data: LoadedData }) {
             まとまりは DBSCAN（密度にもとづくクラスタリング）で求めています。「近所とみなす距離」以内に「何地点から集まりと呼ぶ？」以上の地点（その地点自身を含む）があれば中心となり、中心から距離内の地点を同じまとまりに加えます。距離は Haversine 式による地表の直線距離です。
           </li>
           <li>近い点が連なると、端から端までが設定距離より長いまとまりもできます。設定距離は直径でも移動時間でもありません。</li>
-          <li>ズームでは分類は変わりません。色のにじみは、まとまりに入った各地点のまわりに「近所とみなす距離」の半分の範囲を描いたもので、分類の後に描いています。にじみが重なるのは、おおむね地点どうしが設定距離以内のときです。海や山にかかることもあり、にじみの範囲をすべて巡れるという意味ではありません。</li>
+          <li>ズームでは分類は変わりません。しゃぼん玉は、まとまりに入った各地点のまわりに「近所とみなす距離」の半分の範囲を描いたもので、分類の後に描いています。しゃぼん玉どうしが触れるのは、おおむね地点どうしが設定距離以内のときです。海や山にかかることもあり、しゃぼん玉の範囲をすべて巡れるという意味ではありません。</li>
           <li>鉄道は国土数値情報（鉄道時系列、2025年度版・非商用）を Day1 作品「駅のあった北海道」で加工したデータです。2025年末時点で営業中の路線と駅を示し、「廃止された路線」では1950年以降に営業していた区間を破線で重ねます。駅は拡大すると表示されます。</li>
           <li>空港は国土数値情報（空港、2021年）の標点位置です。供用中の空港を光らせ、休止中は白抜きで示します。まとまりの計算には含めていません。</li>
           <li>道の駅は2018年時点の登録を重ねた参考情報で、まとまりの計算には含めていません。道路は地理院ベクトルタイルの道路中心線（高速・国道・道道など）です。</li>
@@ -318,8 +318,8 @@ function AboutEn({ data }: { data: LoadedData }) {
           </li>
           <li>Spots in a chain can form a cluster longer than the set distance. The distance is neither a diameter nor a travel time.</li>
           <li>
-            Zooming does not change the clusters. The colored glow is drawn after clustering, as half the set distance around each member spot, so glows touch
-            roughly when spots are within the set distance. A glow may cover sea or mountains; it does not mean the whole area can be visited.
+            Zooming does not change the clusters. Each soap bubble is drawn after clustering, as half the set distance around each member spot, so bubbles touch
+            roughly when spots are within the set distance. A bubble may cover sea or mountains; it does not mean the whole area can be visited.
           </li>
           <li>
             Railways are from the NLNI Railway Time Series (FY2025, non-commercial), processed in the Day 1 map “Where the Stations Were”. They show lines and stations

@@ -71,7 +71,7 @@ const STATUS_EN: Record<string, string> = { 供用中: 'In service', 休止中: 
 export const airportStatus = (s: string, lang: Lang) => (lang === 'en' ? STATUS_EN[s] ?? s : s);
 
 const en = {
-  subtitle: 'Clustering Hokkaido’s tourist spots by distance',
+  subtitle: 'Kawaii clusters of Hokkaido’s tourist spots',
   feature: 'Feature: ',
   openGuide: 'Open the guide',
   guideTitle: 'Guide',
@@ -137,7 +137,7 @@ const en = {
     about: 'About this map and data',
   },
   legend: 'Legend',
-  legendClusters: 'Clusters (colored glow)',
+  legendClusters: 'Clusters (soap bubbles)',
   legendIsolated: 'Isolated spots',
   legendPoints: 'Tourism resources',
   distanceLabel: 'How near is near?',
@@ -149,7 +149,7 @@ const en = {
   guideSteps: [
     {
       title: 'What areas appear when you cluster?',
-      body: 'Nearby tourist spots are grouped by colored glows. Pick a glow, or open the list from this counter, to see how many spots it has and what kinds.',
+      body: 'Nearby tourist spots are grouped into soap bubbles. Pick a bubble, or open the list from this counter, to see how many spots it has and what kinds.',
     },
     {
       title: 'How far do clusters reach as you widen the distance?',
@@ -234,7 +234,7 @@ const en = {
 type Dict = typeof en;
 
 const ja: Dict = {
-  subtitle: '北海道の観光地を、距離でまとめる地図',
+  subtitle: '北海道の観光地の kawaii クラスター',
   feature: '特集：',
   openGuide: '操作ガイドを開く',
   guideTitle: '操作ガイド',
@@ -300,7 +300,7 @@ const ja: Dict = {
     about: 'この地図とデータについて',
   },
   legend: '凡例',
-  legendClusters: 'まとまり（色のにじみ）',
+  legendClusters: 'まとまり（しゃぼん玉）',
   legendIsolated: '孤立点',
   legendPoints: '観光資源',
   distanceLabel: '近所とみなす距離',
@@ -311,7 +311,7 @@ const ja: Dict = {
   guideSteps: [
     {
       title: 'まとめると、どんなエリアが見える？',
-      body: '近い観光資源どうしを、色のにじみでまとめています。にじみか、ここ（件数の札）から開く一覧を選ぶと、地点数や種別の内訳が出ます。',
+      body: '近い観光資源どうしを、しゃぼん玉でまとめています。しゃぼん玉か、ここ（件数の札）から開く一覧を選ぶと、地点数や種別の内訳が出ます。',
     },
     {
       title: '距離を広げると、どこまでまとまる？',
