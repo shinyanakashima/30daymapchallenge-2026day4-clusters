@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DistanceIndex, haversineKm, type GeoPoint } from '../src/lib/geo';
 import { dbscan } from '../src/lib/dbscan';
-import { outlineOf } from '../src/lib/hull';
 import { assignColors } from '../src/lib/colors';
 
 // 緯度 43 度付近で経度方向に並べる小さな既知配置。
@@ -112,19 +111,6 @@ describe('dbscan', () => {
     const r = run([at(1, 0)], 10, 3, []);
     expect(r.clusters).toEqual([]);
     expect(r.noise).toEqual([]);
-  });
-});
-
-describe('outlineOf', () => {
-  it('同位置だけなら輪郭なし、2 点なら線、3 点以上で面', () => {
-    expect(outlineOf([[143, 43], [143, 43]]).kind).toBe('none');
-    expect(outlineOf([[143, 43], [143.1, 43]]).kind).toBe('line');
-    const poly = outlineOf([[143, 43], [143.1, 43], [143.05, 43.1], [143.05, 43.02]]);
-    expect(poly.kind).toBe('polygon');
-    if (poly.kind === 'polygon') expect(poly.ring).toHaveLength(4); // 内側の点は除かれ、閉じる
-  });
-  it('一直線上の 3 点は線', () => {
-    expect(outlineOf([[143, 43], [143.1, 43], [143.2, 43]]).kind).toBe('line');
   });
 });
 

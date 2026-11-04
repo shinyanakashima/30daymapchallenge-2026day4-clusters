@@ -228,6 +228,7 @@ function Explorer({ data }: { data: LoadedData }) {
         view={settings.view}
         selectedId={settings.sel}
         selectedGroup={selectedGroup}
+        epsKm={settings.epsKm}
         initialPos={initialPos.current}
         padding={padding}
         onSelect={onSelect}

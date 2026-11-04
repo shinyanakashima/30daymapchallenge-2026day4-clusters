@@ -1,5 +1,6 @@
 import type { Map as MLMap } from 'maplibre-gl';
 import { PALETTE } from './lib/colors';
+import { blobRadiusKm, metersPerPixel } from './blob';
 import type { Computed } from './model';
 import type { Resource, ViewMode } from './types';
 import { INK, NOISE_STROKE, PAPER, PLAIN_POINT } from './mapStyle';
@@ -102,30 +103,23 @@ export async function exportPng(
       return [p.x * k, headH + p.y * k] as const;
     };
     if (computed && info.view === 'clusters') {
+      // にじみ: 色ごとに不透明の円を重ねてから半透明で合成し、重なりを 1 枚に見せる
+      const rPx = ((blobRadiusKm(info.epsKm) * 1000) / metersPerPixel(map.getZoom())) * k;
       for (const g of computed.groups) {
-        const color = PALETTE[g.color];
-        const coords = g.outline.kind === 'polygon' ? g.outline.ring : g.outline.kind === 'line' ? g.outline.coords : [];
-        if (!coords.length) continue;
-        ctx.beginPath();
-        coords.forEach(([lon, lat], i) => {
-          const [x, y] = proj(lon, lat);
-          if (i) ctx.lineTo(x, y);
-          else ctx.moveTo(x, y);
-        });
-        ctx.lineJoin = 'round';
-        ctx.lineCap = 'round';
-        ctx.globalAlpha = 0.13;
-        ctx.strokeStyle = color;
-        ctx.lineWidth = 16 * k;
-        ctx.stroke();
-        if (g.outline.kind === 'polygon') {
-          ctx.globalAlpha = 0.1;
-          ctx.fillStyle = color;
-          ctx.fill();
+        const layer = document.createElement('canvas');
+        layer.width = W;
+        layer.height = canvas.height;
+        const lc = layer.getContext('2d')!;
+        lc.fillStyle = PALETTE[g.color];
+        for (const id of g.members) {
+          const r = resources.find((x) => x.id === id)!;
+          const [x, y] = proj(r.lon, r.lat);
+          lc.beginPath();
+          lc.arc(x, y, rPx, 0, Math.PI * 2);
+          lc.fill();
         }
-        ctx.globalAlpha = 0.85;
-        ctx.lineWidth = 1.2 * k;
-        ctx.stroke();
+        ctx.globalAlpha = 0.24;
+        ctx.drawImage(layer, 0, 0);
         ctx.globalAlpha = 1;
       }
     }

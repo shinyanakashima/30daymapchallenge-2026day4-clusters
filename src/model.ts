@@ -1,7 +1,6 @@
 import { assignColors, type ColoredGroup } from './lib/colors';
 import { dbscan } from './lib/dbscan';
 import type { DistanceIndex } from './lib/geo';
-import { outlineOf, type Outline } from './lib/hull';
 import type { CategorySel, Resource } from './types';
 
 export interface Group {
@@ -9,7 +8,6 @@ export interface Group {
   key: number;
   members: number[];
   color: number;
-  outline: Outline;
   maxKm: number;
   centroid: [number, number];
   municipalities: { name: string; count: number }[];
@@ -75,7 +73,6 @@ export function computeClusters(
       key: c.members[0],
       members: c.members,
       color: colors[i],
-      outline: outlineOf(rs.map((x) => [x.lon, x.lat])),
       maxKm: index.maxPairwise(c.members),
       centroid: [lon, lat],
       municipalities,

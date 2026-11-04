@@ -4,6 +4,7 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 import { PALETTE } from '../lib/colors';
 import type { Computed, Group } from '../model';
 import type { MapPos, Resource, ViewMode } from '../types';
+import { BLOB_THRESHOLD, blobRadiusKm, heatmapRadiusExpr, hexToRgba, metersPerPixel } from '../blob';
 import { baseStyle, DATA_ATTRIBUTION, HOKKAIDO_BOUNDS, INK, NOISE_STROKE, PAPER, PLAIN_POINT } from '../mapStyle';
 
 interface Props {
@@ -12,6 +13,7 @@ interface Props {
   view: ViewMode;
   selectedId: number | null;
   selectedGroup: Group | null;
+  epsKm: number;
   initialPos: MapPos | null;
   padding: { top: number; right: number; bottom: number; left: number };
   onSelect: (id: number | null) => void;
@@ -71,36 +73,46 @@ export function MapView(props: Props) {
     });
 
     map.on('load', () => {
-      map.addSource('outlines', { type: 'geojson', data: EMPTY });
+      map.addSource('members', { type: 'geojson', data: EMPTY });
       map.addSource('points', { type: 'geojson', data: EMPTY });
-      map.addLayer({
-        id: 'outline-fill',
-        type: 'fill',
-        source: 'outlines',
-        filter: ['==', ['geometry-type'], 'Polygon'],
-        paint: { 'fill-color': ['get', 'color'], 'fill-opacity': ['case', ['==', ['get', 'selected'], 1], 0.2, 0.1] },
+      const radius = heatmapRadiusExpr(cb.current.epsKm) as never;
+      // 色ごとに heatmap を分け、重なっても 1 つのなめらかなにじみになるようにする
+      PALETTE.forEach((hex, i) => {
+        map.addLayer({
+          id: `blob-${i}`,
+          type: 'heatmap',
+          source: 'members',
+          filter: ['==', ['get', 'color'], i],
+          paint: {
+            'heatmap-weight': 1,
+            'heatmap-intensity': 1,
+            'heatmap-radius': radius,
+            'heatmap-color': [
+              'step', ['heatmap-density'],
+              'rgba(0,0,0,0)',
+              BLOB_THRESHOLD, hexToRgba(hex, 0.34),
+              BLOB_THRESHOLD * 1.5, hexToRgba(hex, 0.2),
+            ],
+          },
+        });
       });
+      // 選択中のまとまりは、にじみの縁に濃い輪郭を重ねる (色以外の強調)
       map.addLayer({
-        id: 'outline-halo',
-        type: 'line',
-        source: 'outlines',
-        layout: { 'line-join': 'round', 'line-cap': 'round' },
-        paint: { 'line-color': ['get', 'color'], 'line-width': 16, 'line-opacity': ['case', ['==', ['get', 'selected'], 1], 0.24, 0.13] },
-      });
-      map.addLayer({
-        id: 'outline-line',
-        type: 'line',
-        source: 'outlines',
-        layout: { 'line-join': 'round', 'line-cap': 'round' },
-        paint: { 'line-color': ['get', 'color'], 'line-width': ['case', ['==', ['get', 'selected'], 1], 2.5, 1.2], 'line-opacity': 0.85 },
-      });
-      map.addLayer({
-        id: 'outline-selected',
-        type: 'line',
-        source: 'outlines',
+        id: 'blob-selected',
+        type: 'heatmap',
+        source: 'members',
         filter: ['==', ['get', 'selected'], 1],
-        layout: { 'line-join': 'round' },
-        paint: { 'line-color': INK, 'line-width': 1.5, 'line-dasharray': [3, 2], 'line-offset': -0.5 },
+        paint: {
+          'heatmap-weight': 1,
+          'heatmap-intensity': 1,
+          'heatmap-radius': radius,
+          'heatmap-color': [
+            'step', ['heatmap-density'],
+            'rgba(0,0,0,0)',
+            BLOB_THRESHOLD, hexToRgba(INK, 0.9),
+            BLOB_THRESHOLD * 1.25, 'rgba(0,0,0,0)',
+          ],
+        },
       });
       map.addLayer({
         id: 'pt-dim',
@@ -149,17 +161,28 @@ export function MapView(props: Props) {
         cb.current.onSelect(ids[0]);
         return;
       }
-      const outl = map.queryRenderedFeatures(e.point, { layers: ['outline-fill', 'outline-halo'] });
-      if (outl.length) {
-        // 小さい群を優先 (重なり時)
-        outl.sort((a, b) => Number(a.properties.size) - Number(b.properties.size));
-        cb.current.onSelect(Number(outl[0].properties.key));
-        return;
+      // にじみの上なら、そのまとまりを選ぶ (heatmap は当たり判定できないので距離で判定)
+      const { computed, view, epsKm } = cb.current;
+      if (computed && view === 'clusters') {
+        const rPx = (blobRadiusKm(epsKm) * 1000) / metersPerPixel(map.getZoom());
+        let best: { key: number; d: number } | null = null;
+        for (const g of computed.groups) {
+          for (const id of g.members) {
+            const r = cb.current.resources.find((x) => x.id === id)!;
+            const q = map.project([r.lon, r.lat]);
+            const d = Math.hypot(q.x - e.point.x, q.y - e.point.y);
+            if (d <= rPx && (!best || d < best.d)) best = { key: g.key, d };
+          }
+        }
+        if (best) {
+          cb.current.onSelect(best.key);
+          return;
+        }
       }
       cb.current.onSelect(null);
     });
     const setCursor = (c: string) => () => (map.getCanvas().style.cursor = c);
-    for (const layer of ['pt', 'outline-fill', 'outline-halo']) {
+    for (const layer of ['pt']) {
       map.on('mouseenter', layer, setCursor('pointer'));
       map.on('mouseleave', layer, setCursor(''));
     }
@@ -180,6 +203,7 @@ export function MapView(props: Props) {
     const map = mapRef.current;
     if (!map || !loaded.current) return;
     const { resources, computed, view, selectedId, selectedGroup } = cb.current;
+    const epsKm = computed?.epsKm ?? cb.current.epsKm;
     const clusters = view === 'clusters';
     const target = new Set(computed?.targetIds ?? []);
 
@@ -193,19 +217,23 @@ export function MapView(props: Props) {
         properties: { id: r.id, state, color, selected: r.id === selectedId ? 1 : 0 },
       };
     });
-    const outlineFeatures: GeoJSON.Feature[] = [];
+    const memberFeatures: GeoJSON.Feature[] = [];
     if (clusters && computed) {
       for (const g of computed.groups) {
-        const props = { key: g.key, color: PALETTE[g.color], selected: g === selectedGroup ? 1 : 0, size: g.members.length };
-        if (g.outline.kind === 'polygon') {
-          outlineFeatures.push({ type: 'Feature', geometry: { type: 'Polygon', coordinates: [g.outline.ring] }, properties: props });
-        } else if (g.outline.kind === 'line') {
-          outlineFeatures.push({ type: 'Feature', geometry: { type: 'LineString', coordinates: g.outline.coords }, properties: props });
+        for (const id of g.members) {
+          const r = resources.find((x) => x.id === id)!;
+          memberFeatures.push({
+            type: 'Feature',
+            geometry: { type: 'Point', coordinates: [r.lon, r.lat] },
+            properties: { color: g.color, selected: g === selectedGroup ? 1 : 0 },
+          });
         }
       }
     }
     (map.getSource('points') as GeoJSONSource).setData({ type: 'FeatureCollection', features: pointFeatures });
-    (map.getSource('outlines') as GeoJSONSource).setData({ type: 'FeatureCollection', features: outlineFeatures });
+    (map.getSource('members') as GeoJSONSource).setData({ type: 'FeatureCollection', features: memberFeatures });
+    const radius = heatmapRadiusExpr(epsKm) as never;
+    for (const layer of [...PALETTE.map((_, i) => `blob-${i}`), 'blob-selected']) map.setPaintProperty(layer, 'heatmap-radius', radius);
 
     // 地点数のバッジ (色以外でもまとまりが読めるように)
     markers.current.forEach((m) => m.remove());
