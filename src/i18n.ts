@@ -71,8 +71,8 @@ const STATUS_EN: Record<string, string> = { 供用中: 'In service', 休止中: 
 export const airportStatus = (s: string, lang: Lang) => (lang === 'en' ? STATUS_EN[s] ?? s : s);
 
 const en = {
-  title: 'Kawaii clusters of Hokkaido’s tourist spots',
-  subtitle: 'Clustering by distance',
+  title: 'Kawaii clusters of Hokkaido',
+  subtitle: 'Hokkaido’s tourist spots, clustered by distance',
   feature: 'Feature: ',
   openGuide: 'Open the guide',
   guideTitle: 'Guide',
@@ -237,8 +237,8 @@ const en = {
 type Dict = typeof en;
 
 const ja: Dict = {
-  title: '北海道の観光地の kawaii クラスター',
-  subtitle: '距離で変わる観光のまとまり',
+  title: 'Kawaii clusters of Hokkaido',
+  subtitle: '北海道の観光地を、距離でまとめる地図',
   feature: '特集：',
   openGuide: '操作ガイドを開く',
   guideTitle: '操作ガイド',
