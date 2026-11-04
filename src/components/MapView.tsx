@@ -251,6 +251,17 @@ export function MapView(props: Props) {
     // スマホでは出典を折りたたむ (全文は「この地図とデータについて」にもある)
     const narrow = window.matchMedia('(max-width: 760px)').matches;
     map.addControl(new maplibregl.AttributionControl({ compact: narrow, customAttribution: DATA_ATTRIBUTION }), 'bottom-left');
+    if (narrow) {
+      // 折りたたみ表示は出典が届くたびに開き直されるので、利用者が ⓘ で開いたとき以外は閉じておく
+      let userOpened = false;
+      const attrib = () => map.getContainer().querySelector('.maplibregl-ctrl-attrib');
+      map.getContainer().addEventListener('click', (e) => {
+        if ((e.target as HTMLElement).closest('.maplibregl-ctrl-attrib-button')) userOpened = !userOpened;
+      });
+      map.on('data', () => {
+        if (!userOpened) attrib()?.classList.remove('maplibregl-compact-show');
+      });
+    }
     map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'bottom-right');
     mapRef.current = map;
 

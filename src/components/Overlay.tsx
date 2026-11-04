@@ -36,13 +36,38 @@ interface Props {
   onEdition: (e: Edition) => void;
 }
 
-type Pop = 'groups' | 'minpts' | 'theme' | 'layers' | 'more' | 'import' | 'export' | 'about';
+const LAYERS_KEY = 'd4-clusters-layers-open';
+
+type Pop = 'groups' | 'minpts' | 'theme' | 'more' | 'import' | 'export' | 'about';
 
 /** 地図の上に重ねる UI。普段は小さな札と下の操作バーだけを見せ、詳細は開いたときだけ出す。 */
 export function Overlay(p: Props) {
   const { data, byId, settings, update, computed } = p;
   const [pop, setPop] = useState<Pop | null>(null);
-  const toggle = (k: Pop) => setPop((cur) => (cur === k ? null : k));
+  const toggle = (k: Pop) => {
+    setPop((cur) => (cur === k ? null : k));
+    // スマホでは左の札と窓が重なるので、窓を開いたら畳む
+    if (p.isMobile) setLayersOpen(false);
+  };
+  // 重ねる情報の札: PC では最初から開く。開閉はこのブラウザに覚えさせる
+  const [layersOpen, setLayersOpen] = useState<boolean>(() => {
+    try {
+      const v = window.localStorage.getItem(LAYERS_KEY);
+      if (v !== null) return v === '1' && !p.isMobile;
+    } catch {
+      /* 保存できない環境では初期値 */
+    }
+    return !p.isMobile;
+  });
+  const setLayers = (open: boolean) => {
+    setLayersOpen(open);
+    if (open && p.isMobile) setPop(null);
+    try {
+      window.localStorage.setItem(LAYERS_KEY, open ? '1' : '0');
+    } catch {
+      /* 保存できなくても動作に影響しない */
+    }
+  };
   const rootRef = useRef<HTMLDivElement>(null);
   const bubbleRef = useRef<HTMLDivElement>(null);
   const anchors = useRef<Partial<Record<GuideAnchor, HTMLElement | null>>>({});
@@ -194,6 +219,49 @@ export function Overlay(p: Props) {
         </button>
       </header>
 
+      {/* 左: 重ねる情報 (最初から開いておき、見出しで畳める) */}
+      <section className={'float layer-panel' + (layersOpen ? ' is-open' : '')} aria-label="重ねる情報">
+        <button type="button" className="layer-head" onClick={() => setLayers(!layersOpen)} aria-expanded={layersOpen}>
+          <span>重ねる情報</span>
+          <i className="caret" aria-hidden="true" />
+        </button>
+        {layersOpen && (
+      <div className="layer-list">
+        {(
+          [
+            ['showRail', 'lg-rail', '鉄道（2025年末）'],
+            ['showRailHistory', 'lg-rail-history', '廃止された路線'],
+            ['showAirports', 'lg-airport', '空港'],
+            ['showEki', 'lg-eki', '道の駅'],
+            ['showRoads', 'lg-road', '道路'],
+          ] as const
+        ).map(([key, icon, label]) => (
+          <label key={key} className="layer-row">
+            <input type="checkbox" checked={settings[key]} onChange={(e) => update({ [key]: e.target.checked })} />
+            <i className={icon} aria-hidden="true" />
+            {label}
+          </label>
+        ))}
+        <div className="layer-row layer-theme">
+          <span>背景</span>
+          <div className="seg seg-small" role="radiogroup" aria-label="背景地図">
+            {(
+              [
+                ['day', '衛星写真'],
+                ['night', '夜の地形'],
+              ] as const
+            ).map(([key, label]) => (
+              <button key={key} type="button" role="radio" aria-checked={settings.theme === key} onClick={() => update({ theme: key })}>
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+        <p className="field-hint">重ねた情報は参考で、まとまりの計算には含めません。</p>
+      </div>
+        )}
+      </section>
+
       {/* 右上: 件数の札 → まとまり一覧 */}
       <div className="top-right">
         <button
@@ -322,41 +390,6 @@ export function Overlay(p: Props) {
                 )}
               </div>
             )}
-            {pop === 'layers' && (
-              <div className="layer-list">
-                {(
-                  [
-                    ['showRail', 'lg-rail', '鉄道（2025年末）'],
-                    ['showRailHistory', 'lg-rail-history', '廃止された路線'],
-                    ['showAirports', 'lg-airport', '空港'],
-                    ['showEki', 'lg-eki', '道の駅'],
-                    ['showRoads', 'lg-road', '道路'],
-                  ] as const
-                ).map(([key, icon, label]) => (
-                  <label key={key} className="layer-row">
-                    <input type="checkbox" checked={settings[key]} onChange={(e) => update({ [key]: e.target.checked })} />
-                    <i className={icon} aria-hidden="true" />
-                    {label}
-                  </label>
-                ))}
-                <div className="layer-row layer-theme">
-                  <span>背景</span>
-                  <div className="seg seg-small" role="radiogroup" aria-label="背景地図">
-                    {(
-                      [
-                        ['day', '衛星写真'],
-                        ['night', '夜の地形'],
-                      ] as const
-                    ).map(([key, label]) => (
-                      <button key={key} type="button" role="radio" aria-checked={settings.theme === key} onClick={() => update({ theme: key })}>
-                        {label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                <p className="field-hint">重ねた情報は参考で、まとまりの計算には含めません。</p>
-              </div>
-            )}
             {pop === 'more' && (
               <div className="menu">
                 <div className="menu-block">
@@ -440,7 +473,7 @@ export function Overlay(p: Props) {
             <span className="bar-label">テーマ</span>
             {p.categoryLabel}
           </button>
-          <button type="button" ref={setButton('layers')} className={'bar-button' + (pop === 'layers' ? ' is-open' : '')} onClick={() => toggle('layers')} aria-expanded={pop === 'layers'}>
+          <button type="button" ref={setButton('layers')} className={'bar-button' + (layersOpen ? ' is-open' : '')} onClick={() => setLayers(!layersOpen)} aria-expanded={layersOpen}>
             レイヤ
           </button>
           <button
@@ -469,7 +502,6 @@ const POP_TITLES: Record<Pop, string> = {
   groups: 'まとまり',
   minpts: '何地点から集まり？',
   theme: 'テーマ',
-  layers: '重ねる情報',
   more: 'その他',
   import: '地点を追加する',
   export: '画像（PNG）を保存',
