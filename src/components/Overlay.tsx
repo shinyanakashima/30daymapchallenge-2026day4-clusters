@@ -71,6 +71,18 @@ export function Overlay(p: Props) {
     }
   };
   const rootRef = useRef<HTMLDivElement>(null);
+  // 題名の札の高さを測り、その下の札 (件数・重ねる情報) の位置に使う
+  const titleRef = useRef<HTMLElement>(null);
+  const [titleH, setTitleH] = useState(64);
+  useLayoutEffect(() => {
+    const el = titleRef.current;
+    if (!el) return;
+    const measure = () => setTitleH(Math.ceil(el.getBoundingClientRect().height));
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
   const bubbleRef = useRef<HTMLDivElement>(null);
   const anchors = useRef<Partial<Record<GuideAnchor, HTMLElement | null>>>({});
   const setAnchor = (k: GuideAnchor) => (el: HTMLElement | null) => {
@@ -204,12 +216,12 @@ export function Overlay(p: Props) {
     : [t.calculating];
 
   return (
-    <div className="overlay" ref={rootRef}>
+    <div className="overlay" ref={rootRef} style={{ ['--title-h' as string]: `${titleH}px` }}>
       <div className="bubbles" ref={bubbleRef} aria-hidden="true" />
       {/* 左上: タイトル */}
-      <header className="float title-chip">
+      <header className="float title-chip" ref={titleRef}>
         <div>
-          <h1 className="title">Shabon Hokkaido</h1>
+          <h1 className="title">{t.title}</h1>
           <p className="subtitle">
             <span className="tagline">How Near Is Near?</span>
             {!p.isMobile && <>{lang === 'en' ? ' | ' : '｜'}{t.subtitle}</>}

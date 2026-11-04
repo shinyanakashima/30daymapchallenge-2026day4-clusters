@@ -1,4 +1,4 @@
-# Shabon Hokkaido — How Near Is Near?
+# Kawaii clusters of Hokkaido’s tourist spots — How Near Is Near?
 
 北海道の観光地を、距離でまとめる地図。まとまりをしゃぼん玉として描く「kawaii クラスター」（英語では kawaii clusters）が特徴。画面は英語が標準で、日本語にも切り替えられる（タイトルの札の EN／日本語、URL `lang=ja`、選んだ言語はブラウザに保存）。観光地名・自治体名はデータの原文（日本語）のまま、種別名は英訳を用意した（`src/i18n.ts`）。
 

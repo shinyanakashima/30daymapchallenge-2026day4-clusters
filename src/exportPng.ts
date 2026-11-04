@@ -140,7 +140,7 @@ export async function exportPng(
   ctx.fillStyle = INK;
   ctx.textBaseline = 'alphabetic';
   ctx.font = `600 ${20 * s}px ${FONT}`;
-  ctx.fillText(info.title || 'Shabon Hokkaido — How Near Is Near?', 20 * s, 34 * s);
+  ctx.fillText(info.title || (info.lang === 'en' ? 'Kawaii clusters of Hokkaido’s tourist spots' : '北海道の観光地の kawaii クラスター'), 20 * s, 34 * s);
   ctx.font = `${12.5 * s}px ${FONT}`;
   ctx.fillStyle = SUB;
   const counts = computed ? X.counts(computed.targetIds.length, computed.groups.length, computed.noise.length) : '';
