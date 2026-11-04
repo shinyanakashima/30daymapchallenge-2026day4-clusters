@@ -25,13 +25,14 @@ export interface GeoPoint {
 export class DistanceIndex {
   readonly ids: number[];
   private readonly pos = new Map<number, number>();
-  private readonly matrix: Float64Array;
+  private readonly matrix: Float32Array;
 
   constructor(points: readonly GeoPoint[]) {
     const sorted = [...points].sort((a, b) => a.id - b.id);
     this.ids = sorted.map((p) => p.id);
     const n = sorted.length;
-    this.matrix = new Float64Array(n * n);
+    // Float32 で十分 (km 単位で 1m 未満の誤差)。2,000 点でも約 16MB に収まる。
+    this.matrix = new Float32Array(n * n);
     sorted.forEach((p, i) => {
       if (this.pos.has(p.id)) throw new Error(`duplicate id ${p.id}`);
       this.pos.set(p.id, i);

@@ -1,4 +1,4 @@
-export type GroupKey = 'nature' | 'culture' | 'unclassified';
+export type GroupKey = 'nature' | 'culture' | 'unclassified' | 'user';
 
 export interface Municipality {
   code: string;

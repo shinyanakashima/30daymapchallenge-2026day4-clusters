@@ -132,6 +132,12 @@ a { color: var(--accent); }
 .dot { display: inline-block; width: 9px; height: 9px; border-radius: 2px; margin-right: 4px; vertical-align: -1px; }
 .dot-nature { background: var(--nature); }
 .dot-culture { background: var(--culture); }
+.mix-user, .dot-user { background: #6b7280; }
+.import-drop { border: 1.5px dashed var(--line); border-radius: var(--radius); padding: 10px 12px; text-align: center; color: var(--ink-2); font-size: 12.5px; cursor: pointer; display: block; }
+.import-drop:hover, .import-drop.is-over { border-color: var(--ink-2); background: #fff; }
+.import-drop input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.import-info { font-size: 12.5px; margin: 0 0 6px; }
+.import-error { color: #9f1239; font-size: 12.5px; margin: 6px 0 0; }
 .kinds { display: flex; flex-wrap: wrap; gap: 4px; margin: 8px 0; }
 .tag { font-size: 11.5px; background: var(--paper); border-radius: 4px; padding: 1px 6px; color: var(--ink-2); }
 .munis { margin: 6px 0; font-size: 13px; }
@@ -189,6 +195,19 @@ a { color: var(--accent); }
 
 .fatal { display: grid; place-content: center; text-align: center; height: 100%; padding: 24px; gap: 8px; }
 .fatal h1 { font-size: 18px; margin: 0; }
+
+/* ---------- point popup ---------- */
+.maplibregl-popup-content { background: var(--paper-2); border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; box-shadow: 0 4px 14px rgba(60,45,20,0.16); font-family: var(--font); }
+.maplibregl-popup.is-pinned .maplibregl-popup-content { padding-right: 26px; }
+.maplibregl-popup-anchor-bottom .maplibregl-popup-tip { border-top-color: var(--paper-2); }
+.maplibregl-popup-anchor-top .maplibregl-popup-tip { border-bottom-color: var(--paper-2); }
+.maplibregl-popup-close-button { font-size: 16px; padding: 0 6px; color: var(--ink-3); }
+.maplibregl-popup:not(.is-pinned) { pointer-events: none; }
+.pt-popup p { margin: 0; }
+.pt-popup-name { font-weight: 700; font-size: 13.5px; line-height: 1.4; }
+.pt-popup-meta { font-size: 12px; color: var(--ink-2); }
+.pt-popup-cluster { font-size: 12px; margin-top: 4px !important; display: flex; align-items: center; gap: 5px; }
+.pt-popup-swatch { width: 9px; height: 9px; border-radius: 50%; flex: none; }
 
 /* ---------- mobile: bottom sheet ---------- */
 .is-mobile .panel {

@@ -15,8 +15,10 @@ interface GroupProps {
 
 export function GroupCard({ group, byId, selectedId, epsKm, onPick, onClose }: GroupProps) {
   const total = group.members.length;
-  const nature = group.members.filter((id) => byId.get(id)?.group === 'nature').length;
-  const culture = total - nature;
+  const count = (g: string) => group.members.filter((id) => byId.get(id)?.group === g).length;
+  const nature = count('nature');
+  const culture = count('culture');
+  const user = count('user');
   return (
     <section className="card" aria-labelledby="card-title">
       <div className="card-head">
@@ -39,10 +41,11 @@ export function GroupCard({ group, byId, selectedId, epsKm, onPick, onClose }: G
           <dd>{fmtKm(group.maxKm)} km</dd>
         </div>
       </dl>
-      <div className="mix" aria-label={`自然資源 ${nature}、人文資源 ${culture}`}>
+      <div className="mix" aria-label={`自然資源 ${nature}、人文資源 ${culture}` + (user ? `、追加データ ${user}` : '')}>
         <div className="mix-bar">
           <span className="mix-nature" style={{ flexGrow: nature }} />
           <span className="mix-culture" style={{ flexGrow: culture }} />
+          <span className="mix-user" style={{ flexGrow: user }} />
         </div>
         <div className="mix-legend">
           <span>
@@ -53,6 +56,12 @@ export function GroupCard({ group, byId, selectedId, epsKm, onPick, onClose }: G
             <i className="dot dot-culture" />
             人文資源 {culture}
           </span>
+          {user > 0 && (
+            <span>
+              <i className="dot dot-user" />
+              追加データ {user}
+            </span>
+          )}
         </div>
       </div>
       <p className="kinds">
@@ -62,10 +71,12 @@ export function GroupCard({ group, byId, selectedId, epsKm, onPick, onClose }: G
           </span>
         ))}
       </p>
-      <p className="munis">
-        <span className="label">含まれる自治体</span>
-        {group.municipalities.map((m) => m.name).join('、')}
-      </p>
+      {group.municipalities.length > 0 && (
+        <p className="munis">
+          <span className="label">含まれる自治体</span>
+          {group.municipalities.map((m) => m.name).join('、')}
+        </p>
+      )}
       {group.maxKm > epsKm * 2 && (
         <p className="hint">近い点が連なると、大きなまとまりにもなります。まとまりの端から端までが「近所」という意味ではありません。</p>
       )}
@@ -123,10 +134,13 @@ export function PointCard({ resource, nearest, onClose }: PointProps) {
           <dd className="small">{nearest ? `${nearest.name}（${fmtKm(nearest.km)} km）` : 'なし'}</dd>
         </div>
       </dl>
-      <p className="munis">
-        <span className="label">所在地</span>
-        {resource.address}
-      </p>
+      {resource.address && (
+        <p className="munis">
+          <span className="label">所在地</span>
+          {resource.address}
+        </p>
+      )}
+      {resource.group === 'user' && <p className="muted">利用者が追加した地点です。</p>}
     </section>
   );
 }

@@ -8,6 +8,7 @@ import type { AppSettings, CategorySel, MapPos } from './types';
 import { MapView } from './components/MapView';
 import { Panel } from './components/Panel';
 import { exportPng } from './exportPng';
+import { loadStoredImport, storeImport, type ImportedSet } from './importGeojson';
 
 const GUIDE_KEY = 'd4-clusters-guide-closed';
 const readGuideClosed = () => {
@@ -82,7 +83,22 @@ function categoryLabel(cat: CategorySel, data: LoadedData): string {
   return names.length <= 3 ? names.join('・') : `${names.slice(0, 3).join('・')} ほか${names.length - 3}種別`;
 }
 
-function Explorer({ data }: { data: LoadedData }) {
+function mergeData(base: LoadedData, imported: ImportedSet | null): LoadedData {
+  if (!imported) return base;
+  return {
+    ...base,
+    resources: [...base.resources, ...imported.resources],
+    categories: {
+      ...base.categories,
+      groups: [...base.categories.groups.filter((g) => g.key !== 'user'), { key: 'user', label: '追加データ' }],
+      kinds: [...base.categories.kinds, ...imported.kinds],
+    },
+  };
+}
+
+function Explorer({ data: baseData }: { data: LoadedData }) {
+  const [imported, setImported] = useState<ImportedSet | null>(() => loadStoredImport());
+  const data = useMemo(() => mergeData(baseData, imported), [baseData, imported]);
   const { resources } = data;
   const byId = useMemo(() => new Map(resources.map((r) => [r.id, r])), [resources]);
   const index = useMemo(() => new DistanceIndex(resources), [resources]);
@@ -103,6 +119,29 @@ function Explorer({ data }: { data: LoadedData }) {
   const initialPos = useRef(settings.map);
 
   const update = useCallback((patch: Partial<AppSettings>) => setSettings((s) => ({ ...s, ...patch })), []);
+
+  const applyImport = useCallback(
+    (set: ImportedSet | null) => {
+      setImported(set);
+      const saved = storeImport(set);
+      setSettings((s) => {
+        const next = { ...s };
+        const userCat = (s.cat.type === 'group' && s.cat.group === 'user') || (s.cat.type === 'kinds' && s.cat.keys.some((k) => k.startsWith('u')));
+        if (userCat) next.cat = set ? { type: 'group', group: 'user' } : { type: 'all' };
+        if (s.sel !== null && s.sel >= 100_000_000) next.sel = null;
+        if (set && !userCat && s.cat.type === 'kinds') next.cat = { type: 'all' };
+        return next;
+      });
+      prevColors.current = null;
+      setComputed(null); // 古い結果は削除・追加された地点を参照するので捨てる
+      if (set) {
+        setNotice(
+          `${set.fileName} から ${set.resources.length} 地点を追加しました。` + (saved ? '' : '（このブラウザには保存できなかったため、再読み込みで消えます）'),
+        );
+      } else setNotice('追加データを取り消しました。');
+    },
+    [],
+  );
 
   // --- 再計算: 短いデバウンスと最新要求 ID ---
   const latestReq = useRef(0);
@@ -185,7 +224,7 @@ function Explorer({ data }: { data: LoadedData }) {
     const url = `${window.location.origin}${window.location.pathname}?${serializeSettings(settings)}`;
     try {
       await navigator.clipboard.writeText(url);
-      setNotice('この設定の URL をコピーしました。');
+      setNotice(imported ? 'この設定の URL をコピーしました。追加データは URL に含まれないため、開いた人には元データだけが表示されます。' : 'この設定の URL をコピーしました。');
     } catch {
       window.prompt('この URL をコピーしてください', url);
     }
@@ -201,6 +240,7 @@ function Explorer({ data }: { data: LoadedData }) {
       minPts: settings.minPts,
       categoryLabel: categoryLabel(settings.cat, data),
       view: settings.view,
+      userCount: imported?.resources.length ?? 0,
     });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(res.blob);
@@ -264,6 +304,8 @@ function Explorer({ data }: { data: LoadedData }) {
         sheetExpanded={sheetExpanded}
         setSheetExpanded={setSheetExpanded}
         categoryLabel={categoryLabel(settings.cat, data)}
+        imported={imported}
+        onImport={applyImport}
       />
       <div className="toast-region" aria-live="polite">
         {notice && (

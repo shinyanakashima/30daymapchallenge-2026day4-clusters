@@ -17,7 +17,7 @@ export const DEFAULTS: AppSettings = {
   title: '',
 };
 
-const GROUPS: GroupKey[] = ['nature', 'culture', 'unclassified'];
+const GROUPS: GroupKey[] = ['nature', 'culture', 'unclassified', 'user'];
 
 const intIn = (raw: string | null, min: number, max: number): number | null => {
   if (raw === null || !/^\d{1,9}$/.test(raw)) return null;

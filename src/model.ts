@@ -34,10 +34,10 @@ export function selectIds(resources: readonly Resource[], cat: CategorySel): num
 }
 
 const muniNames = (r: Resource): string[] =>
-  r.municipalities.length ? r.municipalities.map((m) => m.name ?? m.code) : [r.address];
+  r.municipalities.length ? r.municipalities.map((m) => m.name ?? m.code) : r.address ? [r.address] : [];
 
 export function groupLabel(munis: { name: string; count: number }[]): string {
-  if (munis.length === 0) return 'まとまり';
+  if (munis.length === 0) return '追加データ';
   if (munis.length === 1) return munis[0].name;
   if (munis.length === 2) return `${munis[0].name}・${munis[1].name}`;
   return `${munis[0].name}・${munis[1].name} ほか`;

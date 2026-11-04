@@ -6,6 +6,7 @@ import type { AppSettings, CategorySel, GroupKey, Resource } from '../types';
 import { EPS_MAX, EPS_MIN, MINPTS_MAX, MINPTS_MIN, TITLE_MAX } from '../urlState';
 import { GUIDE_STEPS, GuideCard, type GuideAnchor } from './Guide';
 import { GroupCard, PointCard } from './SelectionCard';
+import { MAX_FILE_BYTES, MAX_USER_POINTS, parseImportedGeojson, type ImportedSet } from '../importGeojson';
 
 interface Props {
   data: LoadedData;
@@ -31,6 +32,8 @@ interface Props {
   sheetExpanded: boolean;
   setSheetExpanded: (v: boolean) => void;
   categoryLabel: string;
+  imported: ImportedSet | null;
+  onImport: (set: ImportedSet | null) => void;
 }
 
 const reducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -93,6 +96,12 @@ export function Panel(p: Props) {
   const { data, byId, settings, update, computed, guideOpen, guideStep } = p;
   const anchorRefs = useRef<Partial<Record<GuideAnchor, HTMLElement | null>>>({});
   const [exportOpen, setExportOpen] = useState(false);
+  const cardRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (settings.sel === null) return;
+    const t = window.setTimeout(() => cardRef.current?.scrollIntoView({ block: 'nearest', behavior: reducedMotion() ? 'auto' : 'smooth' }), 50);
+    return () => window.clearTimeout(t);
+  }, [settings.sel]);
 
   const guided: GuideAnchor | null = guideOpen ? GUIDE_STEPS[guideStep].anchor : null;
   const firstGuideRun = useRef(true);
@@ -260,7 +269,11 @@ export function Panel(p: Props) {
           </>,
         )}
 
-        {card && <div className="block">{card}</div>}
+        {card && (
+          <div className="block" ref={cardRef}>
+            {card}
+          </div>
+        )}
 
         {section(
           'distance',
@@ -299,6 +312,7 @@ export function Panel(p: Props) {
                   ['all', 'すべて'],
                   ['nature', '自然資源'],
                   ['culture', '人文資源'],
+                  ...(p.imported ? ([['user', '追加データ']] as const) : []),
                   ['kinds', '種別で選ぶ'],
                 ] as const
               ).map(([key, label]) => (
@@ -370,6 +384,7 @@ export function Panel(p: Props) {
             初期設定に戻す
           </button>
         </div>
+        <ImportBox imported={p.imported} onImport={p.onImport} />
         {exportOpen && <ExportBox initial={settings.title} onSave={p.onSave} onClose={() => setExportOpen(false)} />}
 
         <About data={data} />
@@ -398,6 +413,73 @@ function candidates(p: Props, byId: Map<number, Resource>) {
           </li>
         ))}
       </ul>
+    </div>
+  );
+}
+
+function ImportBox({ imported, onImport }: { imported: ImportedSet | null; onImport: (s: ImportedSet | null) => void }) {
+  const [error, setError] = useState<string | null>(null);
+  const [over, setOver] = useState(false);
+  const read = async (file: File | undefined) => {
+    if (!file) return;
+    setError(null);
+    if (file.size > MAX_FILE_BYTES) {
+      setError(`ファイルが大きすぎます（${Math.round(MAX_FILE_BYTES / 1024 / 1024)}MB まで）`);
+      return;
+    }
+    try {
+      onImport(parseImportedGeojson(await file.text(), file.name));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    }
+  };
+  return (
+    <div className="block">
+      <p className="field-label">地点を追加する</p>
+      {imported && (
+        <div>
+          <p className="import-info">
+            <b>{imported.fileName}</b>：{imported.resources.length} 地点
+            {imported.skipped.length > 0 && `（除外：${imported.skipped.map((x) => `${x.reason} ${x.count}`).join('、')}）`}
+            {imported.truncated > 0 && `（上限 ${MAX_USER_POINTS} 地点を超えた ${imported.truncated} 地点は読み込んでいません）`}
+            {imported.outsideHokkaido > 0 && `。うち ${imported.outsideHokkaido} 地点は北海道の外です`}
+          </p>
+          <button type="button" className="link-button" onClick={() => onImport(null)}>
+            追加データを取り消す
+          </button>
+        </div>
+      )}
+      <label
+        className={'import-drop' + (over ? ' is-over' : '')}
+        onDragOver={(e) => {
+          e.preventDefault();
+          setOver(true);
+        }}
+        onDragLeave={() => setOver(false)}
+        onDrop={(e) => {
+          e.preventDefault();
+          setOver(false);
+          void read(e.dataTransfer.files[0]);
+        }}
+      >
+        <input
+          type="file"
+          accept=".geojson,.json,application/geo+json,application/json"
+          onChange={(e) => {
+            void read(e.target.files?.[0]);
+            e.target.value = '';
+          }}
+        />
+        {imported ? '別の GeoJSON に差し替える' : 'GeoJSON（点）を選ぶ、またはここにドロップ'}
+      </label>
+      {error && (
+        <p className="import-error" role="alert">
+          {error}
+        </p>
+      )}
+      <p className="field-hint">
+        ファイルは送信されず、このブラウザの中だけで使います。名称は name／名称、種別は kind／category／種別 の項目から読み取ります。テーマ「すべて」で元データと合わせて、「追加データ」で追加分だけでまとめます。
+      </p>
     </div>
   );
 }

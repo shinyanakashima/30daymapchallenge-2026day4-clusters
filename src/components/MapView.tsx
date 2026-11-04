@@ -25,12 +25,41 @@ interface Props {
 
 const EMPTY: GeoJSON.FeatureCollection = { type: 'FeatureCollection', features: [] };
 
+/** 地点の属性をポップアップ用の DOM にする (名称は利用者データもあるので textContent で入れる)。 */
+function popupContent(r: Resource, group: Group | undefined, view: ViewMode, inTarget: boolean): HTMLElement {
+  const el = document.createElement('div');
+  el.className = 'pt-popup';
+  const add = (tag: string, cls: string, text: string, color?: string) => {
+    const e = document.createElement(tag);
+    e.className = cls;
+    if (color) {
+      const sw = document.createElement('i');
+      sw.className = 'pt-popup-swatch';
+      sw.style.background = color;
+      e.appendChild(sw);
+    }
+    e.appendChild(document.createTextNode(text));
+    el.appendChild(e);
+  };
+  add('p', 'pt-popup-name', r.name);
+  add('p', 'pt-popup-meta', [r.kind, r.address || r.municipalities.map((m) => m.name ?? m.code).join('・')].filter(Boolean).join('／'));
+  if (!inTarget) add('p', 'pt-popup-cluster', 'いまのテーマの対象外');
+  else if (view === 'clusters') {
+    if (group) add('p', 'pt-popup-cluster', `${group.label} のまとまり（${group.members.length} 地点）`, PALETTE[group.color]);
+    else add('p', 'pt-popup-cluster', '孤立点（どのまとまりにも入っていません）');
+  }
+  return el;
+}
+
 export function MapView(props: Props) {
   const container = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MLMap | null>(null);
   const loaded = useRef(false);
   const markers = useRef<maplibregl.Marker[]>([]);
+  const hoverPopup = useRef<maplibregl.Popup | null>(null);
+  const pinnedPopup = useRef<{ popup: maplibregl.Popup; id: number } | null>(null);
   const cb = useRef(props);
+  const pinRef = useRef<(id: number | null) => void>(() => {});
   cb.current = props;
 
   // 初期化 (1 回だけ)
@@ -161,9 +190,11 @@ export function MapView(props: Props) {
         return;
       }
       if (ids.length === 1) {
+        pinRef.current(ids[0]);
         cb.current.onSelect(ids[0]);
         return;
       }
+      pinRef.current(null);
       // にじみの上なら、そのまとまりを選ぶ (heatmap は当たり判定できないので距離で判定)
       const { computed, view, epsKm } = cb.current;
       if (computed && view === 'clusters') {
@@ -171,7 +202,8 @@ export function MapView(props: Props) {
         let best: { key: number; d: number } | null = null;
         for (const g of computed.groups) {
           for (const id of g.members) {
-            const r = cb.current.resources.find((x) => x.id === id)!;
+            const r = cb.current.resources.find((x) => x.id === id);
+            if (!r) continue;
             const q = map.project([r.lon, r.lat]);
             const d = Math.hypot(q.x - e.point.x, q.y - e.point.y);
             if (d <= rPx && (!best || d < best.d)) best = { key: g.key, d };
@@ -184,11 +216,47 @@ export function MapView(props: Props) {
       }
       cb.current.onSelect(null);
     });
-    const setCursor = (c: string) => () => (map.getCanvas().style.cursor = c);
-    for (const layer of ['pt']) {
-      map.on('mouseenter', layer, setCursor('pointer'));
-      map.on('mouseleave', layer, setCursor(''));
-    }
+    const showPopup = (id: number, pinned: boolean) => {
+      const { resources, computed, view } = cb.current;
+      const r = resources.find((x) => x.id === id);
+      if (!r) return null;
+      const inTarget = computed?.targetIds.includes(id) ?? false;
+      const popup = new maplibregl.Popup({
+        closeButton: pinned,
+        closeOnClick: false,
+        offset: 10,
+        maxWidth: '260px',
+        className: pinned ? 'is-pinned' : '',
+      })
+        .setLngLat([r.lon, r.lat])
+        .setDOMContent(popupContent(r, computed?.groupOf.get(id), view, inTarget))
+        .addTo(map);
+      return popup;
+    };
+    map.on('mousemove', 'pt', (e) => {
+      map.getCanvas().style.cursor = 'pointer';
+      const f = e.features?.[0];
+      if (!f) return;
+      const id = Number(f.properties.id);
+      if (pinnedPopup.current?.id === id) return;
+      hoverPopup.current?.remove();
+      hoverPopup.current = showPopup(id, false);
+    });
+    map.on('mouseleave', 'pt', () => {
+      map.getCanvas().style.cursor = '';
+      hoverPopup.current?.remove();
+      hoverPopup.current = null;
+    });
+    // クリック・タップした地点はポップアップを残す (タッチ端末にはホバーがないため)
+    pinRef.current = (id: number | null) => {
+      pinnedPopup.current?.popup.remove();
+      pinnedPopup.current = null;
+      hoverPopup.current?.remove();
+      hoverPopup.current = null;
+      if (id === null) return;
+      const popup = showPopup(id, true);
+      if (popup) pinnedPopup.current = { popup, id };
+    };
     map.on('moveend', () => {
       const c = map.getCenter();
       cb.current.onMove({ lon: c.lng, lat: c.lat, zoom: map.getZoom() });
@@ -224,7 +292,8 @@ export function MapView(props: Props) {
     if (clusters && computed) {
       for (const g of computed.groups) {
         for (const id of g.members) {
-          const r = resources.find((x) => x.id === id)!;
+          const r = resources.find((x) => x.id === id);
+          if (!r) continue;
           memberFeatures.push({
             type: 'Feature',
             geometry: { type: 'Point', coordinates: [r.lon, r.lat] },
@@ -258,6 +327,13 @@ export function MapView(props: Props) {
   }
 
   useEffect(render, [props.computed, props.view, props.selectedId, props.selectedGroup, props.resources]);
+  // 再計算や選択解除に合わせて、残したポップアップを更新・閉じる
+  useEffect(() => {
+    const pinned = pinnedPopup.current;
+    if (!pinned) return;
+    if (props.selectedId !== pinned.id) pinRef.current(null);
+    else pinRef.current(pinned.id);
+  }, [props.computed, props.view, props.selectedId]);
 
   return <div ref={container} className="map" role="region" aria-label="北海道の観光資源とまとまりの地図" />;
 }

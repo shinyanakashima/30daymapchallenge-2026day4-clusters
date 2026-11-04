@@ -11,6 +11,8 @@ export interface ExportInfo {
   minPts: number;
   categoryLabel: string;
   view: ViewMode;
+  /** 利用者が追加した地点数 */
+  userCount: number;
 }
 
 const FONT = '"Hiragino Sans", "Noto Sans JP", "Yu Gothic", "Meiryo", sans-serif';
@@ -210,7 +212,7 @@ export async function exportPng(
   ctx.fillStyle = '#5c564d';
   ctx.font = `${11 * s}px ${FONT}`;
   ctx.fillText('まとまりは代表位置間の距離による分類で、交通アクセスや周遊実績を示すものではありません。', 20 * s, fy + 50 * s);
-  ctx.fillText(DATA_CREDIT, 20 * s, fy + 72 * s);
+  ctx.fillText(info.userCount ? `${DATA_CREDIT}＋利用者の追加データ ${info.userCount} 地点` : DATA_CREDIT, 20 * s, fy + 72 * s);
   ctx.fillText(mapCanvas ? TILE_CREDIT : '背景地図は取得できなかったため省略', 20 * s, fy + 92 * s);
 
   const blob = await new Promise<Blob | null>((res) => canvas.toBlob(res, 'image/png'));
