@@ -241,6 +241,8 @@ function Explorer({ data: baseData }: { data: LoadedData }) {
       categoryLabel: categoryLabel(settings.cat, data),
       view: settings.view,
       userCount: imported?.resources.length ?? 0,
+      showRoads: settings.showRoads,
+      showEki: settings.showEki,
     });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(res.blob);
@@ -269,6 +271,8 @@ function Explorer({ data: baseData }: { data: LoadedData }) {
         selectedId={settings.sel}
         selectedGroup={selectedGroup}
         epsKm={settings.epsKm}
+        showRoads={settings.showRoads}
+        showEki={settings.showEki}
         initialPos={initialPos.current}
         padding={padding}
         onSelect={onSelect}

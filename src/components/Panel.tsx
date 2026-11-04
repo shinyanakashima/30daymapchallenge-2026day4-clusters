@@ -244,6 +244,24 @@ export function Panel(p: Props) {
               </button>
             </div>
             {stats}
+            <div className="legend" aria-label="凡例">
+              {clusters ? (
+                <>
+                  <span><i className="lg-dot" />まとまりの地点</span>
+                  <span><i className="lg-noise" />孤立点</span>
+                </>
+              ) : (
+                <span><i className="lg-dot lg-plain" />観光資源</span>
+              )}
+              <label className="lg-toggle">
+                <input type="checkbox" checked={settings.showEki} onChange={(e) => update({ showEki: e.target.checked })} />
+                <i className="lg-eki" />道の駅
+              </label>
+              <label className="lg-toggle">
+                <input type="checkbox" checked={settings.showRoads} onChange={(e) => update({ showRoads: e.target.checked })} />
+                <i className="lg-road" />道路
+              </label>
+            </div>
             {clusters && computed && computed.groups.length > 0 && (
               <ul className="group-list" aria-label="まとまりの一覧">
                 {computed.groups.map((g) => (
@@ -557,9 +575,17 @@ function About({ data }: { data: LoadedData }) {
         <a href={s.licenseUrl} target="_blank" rel="noopener">
           非商用
         </a>
-        。背景：
-        <a href="https://maps.gsi.go.jp/development/ichiran.html" target="_blank" rel="noopener">
-          地理院タイル
+        。道の駅：
+        <a href="https://nlftp.mlit.go.jp/ksj/gml/datalist/KsjTmplt-P35.html" target="_blank" rel="noopener">
+          国土数値情報（道の駅）
+        </a>
+        （国土交通省、2018年、非商用）。背景：
+        <a href="https://maps.gsi.go.jp/development/vt.html" target="_blank" rel="noopener">
+          地理院ベクトルタイル
+        </a>
+        、地形：
+        <a href="https://github.com/tilezen/joerd/blob/master/docs/attribution.md" target="_blank" rel="noopener">
+          Terrain Tiles（Mapzen ほか）
         </a>
         。
       </p>
@@ -573,6 +599,7 @@ function About({ data }: { data: LoadedData }) {
           </li>
           <li>近い点が連なると、端から端までが設定距離より長いまとまりもできます。設定距離は直径でも移動時間でもありません。</li>
           <li>ズームでは分類は変わりません。色のにじみは、まとまりに入った各地点のまわりに「近所とみなす距離」の半分の範囲を描いたもので、分類の後に描いています。にじみが重なるのは、おおむね地点どうしが設定距離以内のときです。海や山にかかることもあり、にじみの範囲をすべて巡れるという意味ではありません。</li>
+          <li>道の駅は2018年時点の登録を重ねた参考情報で、まとまりの計算には含めていません。道路は地理院ベクトルタイルの道路中心線（高速・国道・道道など）です。</li>
           <li>色は前回のまとまりとの重なりで引き継いでいますが、識別の補助で、まとまりの同一性を保証するものではありません。</li>
           <li>テーマの「自然資源・人文資源」は観光資源台帳の区分に合わせた対応表です（元データの分類コードは北海道分が未設定のため）。</li>
         </ul>

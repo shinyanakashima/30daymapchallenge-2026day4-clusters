@@ -44,11 +44,16 @@
 
 元データの地理座標（JGD2000/JGD2011）を EPSG:4326 として扱い、小数第 7 位で丸めた。測地系の差は本作品の距離判定（km 単位）と元データの位置正確度（図上 0.3mm 以内）に比べて無視できる。点は施設入口ではなく、資源の中心部などの代表位置。
 
+### 参考レイヤ：道の駅
+
+国土数値情報「道の駅」平成30年（P35-18、非商用）から北海道分 **122 件**（全国 1,145 件）を `public/data/michinoeki.geojson` に抽出。ひし形で重ね、ホバーで名称と市町村を表示する。まとまりの計算には含めない。道路（高速・国道・道道など）とあわせて、パネルの凡例から表示を切り替えられる（URL `ov`）。
+
 ### 配信ファイル（`public/data/`）
 
 - `resources.geojson`：観光資源点（ID 昇順、自治体コードと 2014 年時点の自治体名を同じレコードから対応付け）
 - `categories.json`：種別キー・大分類の対応表
-- `manifest.json`：取得元 URL・取得日・基準日・CRS・件数・除外理由・変換方法・利用条件
+- `manifest.json`：取得元 URL・取得日・基準日・CRS・件数・除外理由・変換方法・利用条件（道の駅は `overlays.michinoeki`）
+- `michinoeki.geojson`：道の駅（参考レイヤ）
 
 ## クラスタリング
 
@@ -103,6 +108,7 @@
 | `view` | `points` で点だけ表示 |
 | `map` | `経度,緯度,ズーム` |
 | `t` | 特集タイトル（40 字まで、テキストとして表示） |
+| `ov` | 参考レイヤ：`r`（道路）・`e`（道の駅）の組み合わせ、`none`。省略時は両方表示 |
 
 不正な値はその項目だけ初期値に戻す。
 
@@ -115,11 +121,11 @@ npm ci
 ```
 
 ```bash
-npm run data:fetch   # 北海道 ZIP を data/raw/ に取得・展開（data/raw は git 管理外）
+npm run data:fetch   # 観光資源（北海道）と道の駅（全国）の ZIP を data/raw/ に取得・展開（data/raw は git 管理外）
 ```
 
 ```bash
-npm run data:build   # public/data/ の GeoJSON・カテゴリ表・manifest を生成
+npm run data:build   # public/data/ の GeoJSON・カテゴリ表・manifest・道の駅を生成
 ```
 
 ```bash
@@ -141,14 +147,16 @@ npm test && npm run build   # 検証とビルド（dist/ に出力）
 ### 構成
 
 - Vite 7.3.7 ＋ React 19.2.9 ＋ TypeScript 5.9.3 ＋ MapLibre GL JS 5.24.0（依存バージョンは固定）
-- 背景地図：地理院タイル（淡色地図）。API キー・常駐サーバー・実行時 AI は不要
+- 背景地図：暗い地形図。地形の陰影と陸海の色分けは Terrain Tiles（Mapzen ほか、AWS Open Data）、海岸線・道路・地名は地理院ベクトルタイル（最適化ベクトルタイル）。いずれも CORS 対応で PNG 保存に入る。API キー・常駐サーバー・実行時 AI は不要
 - `src/lib/`：距離・DBSCAN・配色の計算モジュール、`src/blob.ts`：にじみの寸法
 - `tests/`：計算（距離境界・孤立点・同位置点・連鎖・minPts・カテゴリ変更後の再計算・再現性・色の引き継ぎ）、URL、配信データ件数の検証
 
 ## 出典
 
 - 国土数値情報（観光資源データ）国土交通省 https://nlftp.mlit.go.jp/ksj/gml/datalist/KsjTmplt-P12-v2_2.html
-- 地理院タイル 国土地理院 https://maps.gsi.go.jp/development/ichiran.html
+- 国土数値情報（道の駅データ）国土交通省 https://nlftp.mlit.go.jp/ksj/gml/datalist/KsjTmplt-P35.html
+- 地理院ベクトルタイル 国土地理院 https://maps.gsi.go.jp/development/vt.html
+- Terrain Tiles（Mapzen ほか）https://github.com/tilezen/joerd/blob/master/docs/attribution.md
 
 制作背景として参照した資料（アプリで周遊の不足や交通の不便さを検証したものではない）：
 

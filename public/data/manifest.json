@@ -127,5 +127,19 @@
     "2014年時点の評価・名簿に基づくデータで、現在の営業や入場可否を示さない。北海道のすべての観光スポットを網羅するものではない。",
     "自治体名は同じレコードの所在地住所 (2014年3月時点) から取り、行政区域コードと同じ年代で対応させている。"
   ],
-  "generatedAt": "2026-11-04"
+  "generatedAt": "2026-11-04",
+  "overlays": {
+    "michinoeki": {
+      "name": "国土数値情報 道の駅データ 平成30年 (P35-18)",
+      "publisher": "国土交通省",
+      "pageUrl": "https://nlftp.mlit.go.jp/ksj/gml/datalist/KsjTmplt-P35.html",
+      "downloadUrl": "https://nlftp.mlit.go.jp/ksj/gml/data/P35/P35-18/P35-18_GML.zip",
+      "license": "非商用 (配布ページの使用許諾条件)",
+      "crs": "JGD2011 地理座標を EPSG:4326 として扱う",
+      "filter": "P35_003 (都道府県名) が「北海道」",
+      "countAll": 1145,
+      "count": 122,
+      "note": "参考レイヤ。クラスタリングの対象には含めない。2018年時点の登録で、現在の営業を示さない。"
+    }
+  }
 }

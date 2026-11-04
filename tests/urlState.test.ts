@@ -15,6 +15,8 @@ describe('urlState', () => {
       view: 'points',
       map: { lon: 142.5, lat: 43.25, zoom: 7.5 },
       title: '道東の湖',
+      showRoads: false,
+      showEki: true,
     };
     expect(parseSettings('?' + serializeSettings(s), kinds, ids)).toEqual(s);
   });

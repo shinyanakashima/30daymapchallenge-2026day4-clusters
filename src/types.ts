@@ -68,4 +68,7 @@ export interface AppSettings {
   view: ViewMode;
   map: MapPos | null;
   title: string;
+  /** 重ねて表示する参考レイヤ */
+  showRoads: boolean;
+  showEki: boolean;
 }

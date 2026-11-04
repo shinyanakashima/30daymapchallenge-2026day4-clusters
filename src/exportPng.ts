@@ -3,7 +3,10 @@ import { PALETTE } from './lib/colors';
 import { blobRadiusKm, metersPerPixel } from './blob';
 import type { Computed } from './model';
 import type { Resource, ViewMode } from './types';
-import { INK, NOISE_STROKE, PAPER, PLAIN_POINT } from './mapStyle';
+import { INK, MAP_BG, NOISE_FILL, NOISE_STROKE, PLAIN_POINT } from './mapStyle';
+
+const PAPER = '#121419'; // 画像の地 (パネルと同じ暗色)
+const SUB = '#a8a39a';
 
 export interface ExportInfo {
   title: string;
@@ -13,11 +16,14 @@ export interface ExportInfo {
   view: ViewMode;
   /** 利用者が追加した地点数 */
   userCount: number;
+  showRoads: boolean;
+  showEki: boolean;
 }
 
 const FONT = '"Hiragino Sans", "Noto Sans JP", "Yu Gothic", "Meiryo", sans-serif';
 const DATA_CREDIT = '出典：国土数値情報（観光資源）国土交通省／基準日 2014年9月30日／非商用利用';
-const TILE_CREDIT = '背景：地理院タイル（淡色地図）';
+const TILE_CREDIT = '背景：地理院ベクトルタイル（海岸線・道路）／地形：Terrain Tiles（Mapzen ほか）';
+const EKI_CREDIT = '道の駅：国土数値情報（道の駅）国土交通省 2018年';
 
 /** 地図キャンバスを 1 フレーム描画させてから取り出す (preserveDrawingBuffer 不要)。 */
 function grabMapCanvas(map: MLMap): Promise<HTMLCanvasElement> {
@@ -66,7 +72,7 @@ export async function exportPng(
 
   const W = Math.round(Math.max(cssW, 640) * dpr);
   const headH = Math.round(76 * dpr);
-  const footH = Math.round(108 * dpr);
+  const footH = Math.round(124 * dpr);
   const mapH = Math.round(cssH * dpr * (Math.max(cssW, 640) / cssW));
   const canvas = document.createElement('canvas');
   canvas.width = W;
@@ -82,7 +88,7 @@ export async function exportPng(
   ctx.font = `600 ${20 * s}px ${FONT}`;
   ctx.fillText(info.title || '北海道、旅のまとまりを探して。', 20 * s, 34 * s);
   ctx.font = `${12.5 * s}px ${FONT}`;
-  ctx.fillStyle = '#5c564d';
+  ctx.fillStyle = SUB;
   const counts = computed ? `対象 ${computed.targetIds.length} 地点・まとまり ${computed.groups.length}・孤立点 ${computed.noise.length}` : '';
   const viewLabel = info.view === 'points' ? '点だけ表示' : `近所とみなす距離 ${info.epsKm} km／${info.minPts} 地点から集まり`;
   ctx.fillText(`${viewLabel}／テーマ：${info.categoryLabel}　${counts}`, 20 * s, 58 * s);
@@ -97,7 +103,7 @@ export async function exportPng(
     ctx.drawImage(mapCanvas, 0, headH, W, mapH);
   } else {
     // 背景を省いたカード: 点と輪郭を自前で描く
-    ctx.fillStyle = '#ebe4d6';
+    ctx.fillStyle = MAP_BG;
     ctx.fillRect(0, headH, W, mapH);
     const k = dpr * scale;
     const proj = (lon: number, lat: number) => {
@@ -142,10 +148,10 @@ export async function exportPng(
       if (info.view === 'points' || g) {
         ctx.fillStyle = info.view === 'points' || !g ? PLAIN_POINT : PALETTE[g.color];
         ctx.fill();
-        ctx.strokeStyle = '#fff';
+        ctx.strokeStyle = MAP_BG;
         ctx.lineWidth = 1.4 * k;
       } else {
-        ctx.fillStyle = PAPER;
+        ctx.fillStyle = NOISE_FILL;
         ctx.fill();
         ctx.strokeStyle = NOISE_STROKE;
         ctx.lineWidth = 1.8 * k;
@@ -162,7 +168,7 @@ export async function exportPng(
       const y = headH + (p.y - 16) * k;
       ctx.beginPath();
       ctx.arc(x, y, 11 * k, 0, Math.PI * 2);
-      ctx.fillStyle = '#fffdf8';
+      ctx.fillStyle = '#16181e';
       ctx.fill();
       ctx.lineWidth = 2 * k;
       ctx.strokeStyle = PALETTE[g.color];
@@ -194,7 +200,7 @@ export async function exportPng(
     x += ctx.measureText('まとまりに入る地点（色はまとまりの区別）').width + 36 * s;
     ctx.beginPath();
     ctx.arc(x + 5 * s, ly - 4 * s, 4.5 * s, 0, Math.PI * 2);
-    ctx.fillStyle = PAPER;
+    ctx.fillStyle = NOISE_FILL;
     ctx.fill();
     ctx.strokeStyle = NOISE_STROKE;
     ctx.lineWidth = 1.8 * s;
@@ -209,11 +215,13 @@ export async function exportPng(
     ctx.fillStyle = INK;
     ctx.fillText('観光資源の代表位置', x + 16 * s, ly);
   }
-  ctx.fillStyle = '#5c564d';
+  ctx.fillStyle = SUB;
   ctx.font = `${11 * s}px ${FONT}`;
   ctx.fillText('まとまりは代表位置間の距離による分類で、交通アクセスや周遊実績を示すものではありません。', 20 * s, fy + 50 * s);
-  ctx.fillText(info.userCount ? `${DATA_CREDIT}＋利用者の追加データ ${info.userCount} 地点` : DATA_CREDIT, 20 * s, fy + 72 * s);
-  ctx.fillText(mapCanvas ? TILE_CREDIT : '背景地図は取得できなかったため省略', 20 * s, fy + 92 * s);
+  ctx.fillText(info.userCount ? `${DATA_CREDIT}＋利用者の追加データ ${info.userCount} 地点` : DATA_CREDIT, 20 * s, fy + 70 * s);
+  const tile = mapCanvas ? TILE_CREDIT : '背景地図は取得できなかったため省略';
+  ctx.fillText(tile, 20 * s, fy + 88 * s);
+  if (info.showEki && mapCanvas) ctx.fillText(EKI_CREDIT, 20 * s, fy + 106 * s);
 
   const blob = await new Promise<Blob | null>((res) => canvas.toBlob(res, 'image/png'));
   if (!blob) throw new Error('PNG を作成できませんでした');

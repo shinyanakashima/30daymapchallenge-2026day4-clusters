@@ -15,6 +15,8 @@ export const DEFAULTS: AppSettings = {
   view: 'clusters',
   map: null,
   title: '',
+  showRoads: true,
+  showEki: true,
 };
 
 const GROUPS: GroupKey[] = ['nature', 'culture', 'unclassified', 'user'];
@@ -70,6 +72,11 @@ export function parseSettings(search: string, validKinds: ReadonlySet<string>, v
   s.view = q.get('view') === 'points' ? 'points' : 'clusters';
   s.map = parseMap(q.get('map'));
   s.title = cleanTitle(q.get('t') ?? '');
+  const ov = q.get('ov');
+  if (ov !== null && /^(none|[re]{1,2})$/.test(ov)) {
+    s.showRoads = ov.includes('r');
+    s.showEki = ov.includes('e');
+  }
   return s;
 }
 
@@ -83,5 +90,6 @@ export function serializeSettings(s: AppSettings): string {
   if (s.view === 'points') q.set('view', 'points');
   if (s.map) q.set('map', `${s.map.lon.toFixed(4)},${s.map.lat.toFixed(4)},${s.map.zoom.toFixed(2)}`);
   if (s.title) q.set('t', s.title);
+  if (!s.showRoads || !s.showEki) q.set('ov', (s.showRoads ? 'r' : '') + (s.showEki ? 'e' : '') || 'none');
   return q.toString();
 }

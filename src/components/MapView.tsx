@@ -5,7 +5,7 @@ import { PALETTE } from '../lib/colors';
 import type { Computed, Group } from '../model';
 import type { MapPos, Resource, ViewMode } from '../types';
 import { BLOB_THRESHOLD, blobRadiusKm, heatmapRadiusExpr, hexToRgba, metersPerPixel } from '../blob';
-import { baseStyle, DATA_ATTRIBUTION, HOKKAIDO_BOUNDS, INK, NOISE_STROKE, PAPER, PLAIN_POINT } from '../mapStyle';
+import { baseStyle, DATA_ATTRIBUTION, HOKKAIDO_BOUNDS, INK, MAP_BG, NOISE_FILL, NOISE_STROKE, PLAIN_POINT, ROAD_LAYER_IDS } from '../mapStyle';
 
 interface Props {
   resources: Resource[];
@@ -14,6 +14,8 @@ interface Props {
   selectedId: number | null;
   selectedGroup: Group | null;
   epsKm: number;
+  showRoads: boolean;
+  showEki: boolean;
   initialPos: MapPos | null;
   padding: { top: number; right: number; bottom: number; left: number };
   onSelect: (id: number | null) => void;
@@ -77,6 +79,7 @@ export function MapView(props: Props) {
       maxZoom: 14,
       attributionControl: false,
       dragRotate: false,
+      localIdeographFontFamily: "'Hiragino Sans', 'Noto Sans JP', 'Yu Gothic', 'Meiryo', sans-serif",
       pitchWithRotate: false,
       touchPitch: false,
     });
@@ -121,13 +124,13 @@ export function MapView(props: Props) {
               'interpolate', ['linear'], ['heatmap-density'],
               0, 'rgba(0,0,0,0)',
               BLOB_THRESHOLD * 0.6, hexToRgba(hex, 0),
-              BLOB_THRESHOLD * 1.4, hexToRgba(hex, 0.24),
+              BLOB_THRESHOLD * 1.4, hexToRgba(hex, 0.22),
               1, hexToRgba(hex, 0.26),
             ],
           },
         });
       });
-      // 選択中のまとまりは、にじみ全体を少し濃くする (色以外の強調)
+      // 選択中のまとまりは、にじみ全体を少し明るくする (色以外の強調)
       map.addLayer({
         id: 'blob-selected',
         type: 'heatmap',
@@ -146,12 +149,44 @@ export function MapView(props: Props) {
           ],
         },
       });
+      // 道の駅 (参考レイヤ): ひし形のアイコン
+      const size = 14;
+      const cv = document.createElement('canvas');
+      cv.width = cv.height = size * 2;
+      const c2 = cv.getContext('2d')!;
+      c2.scale(2, 2);
+      c2.beginPath();
+      c2.moveTo(size / 2, 1.5);
+      c2.lineTo(size - 1.5, size / 2);
+      c2.lineTo(size / 2, size - 1.5);
+      c2.lineTo(1.5, size / 2);
+      c2.closePath();
+      c2.fillStyle = '#0a0c11';
+      c2.fill();
+      c2.lineWidth = 1.6;
+      c2.strokeStyle = '#d8d2c6';
+      c2.stroke();
+      map.addImage('eki', c2.getImageData(0, 0, size * 2, size * 2), { pixelRatio: 2 });
+      map.addSource('eki', { type: 'geojson', data: `${import.meta.env.BASE_URL}data/michinoeki.geojson` });
+      map.addLayer({
+        id: 'eki',
+        type: 'symbol',
+        source: 'eki',
+        layout: {
+          'icon-image': 'eki',
+          'icon-size': ['interpolate', ['linear'], ['zoom'], 5, 0.55, 10, 0.9],
+          'icon-allow-overlap': true,
+          visibility: cb.current.showEki ? 'visible' : 'none',
+        },
+        paint: { 'icon-opacity': ['interpolate', ['linear'], ['zoom'], 5, 0.45, 9, 0.8] },
+      });
+      for (const id of ROAD_LAYER_IDS) map.setLayoutProperty(id, 'visibility', cb.current.showRoads ? 'visible' : 'none');
       map.addLayer({
         id: 'pt-dim',
         type: 'circle',
         source: 'points',
         filter: ['==', ['get', 'state'], 'dim'],
-        paint: { 'circle-radius': 2.5, 'circle-color': NOISE_STROKE, 'circle-opacity': 0.3 },
+        paint: { 'circle-radius': 2.5, 'circle-color': NOISE_STROKE, 'circle-opacity': 0.25 },
       });
       map.addLayer({
         id: 'pt',
@@ -160,8 +195,8 @@ export function MapView(props: Props) {
         filter: ['!=', ['get', 'state'], 'dim'],
         paint: {
           'circle-radius': ['match', ['get', 'state'], 'member', 5, 'noise', 4.5, 4.5],
-          'circle-color': ['match', ['get', 'state'], 'noise', PAPER, ['get', 'color']],
-          'circle-stroke-color': ['case', ['==', ['get', 'inSelected'], 1], INK, ['match', ['get', 'state'], 'noise', NOISE_STROKE, '#ffffff']],
+          'circle-color': ['match', ['get', 'state'], 'noise', NOISE_FILL, ['get', 'color']],
+          'circle-stroke-color': ['case', ['==', ['get', 'inSelected'], 1], INK, ['match', ['get', 'state'], 'noise', NOISE_STROKE, MAP_BG]],
           'circle-stroke-width': ['case', ['==', ['get', 'inSelected'], 1], 2, ['match', ['get', 'state'], 'noise', 1.8, 1.4]],
         },
       });
@@ -241,6 +276,31 @@ export function MapView(props: Props) {
       if (pinnedPopup.current?.id === id) return;
       hoverPopup.current?.remove();
       hoverPopup.current = showPopup(id, false);
+    });
+    map.on('mousemove', 'eki', (e) => {
+      if (map.queryRenderedFeatures(e.point, { layers: ['pt'] }).length) return;
+      const f = e.features?.[0];
+      if (!f) return;
+      map.getCanvas().style.cursor = 'default';
+      hoverPopup.current?.remove();
+      const el = document.createElement('div');
+      el.className = 'pt-popup';
+      const n = document.createElement('p');
+      n.className = 'pt-popup-name';
+      n.textContent = String(f.properties.name);
+      const m = document.createElement('p');
+      m.className = 'pt-popup-meta';
+      m.textContent = `${f.properties.municipality}／参考：2018年時点の道の駅`;
+      el.append(n, m);
+      hoverPopup.current = new maplibregl.Popup({ closeButton: false, closeOnClick: false, offset: 8, maxWidth: '240px' })
+        .setLngLat((f.geometry as GeoJSON.Point).coordinates as [number, number])
+        .setDOMContent(el)
+        .addTo(map);
+    });
+    map.on('mouseleave', 'eki', () => {
+      map.getCanvas().style.cursor = '';
+      hoverPopup.current?.remove();
+      hoverPopup.current = null;
     });
     map.on('mouseleave', 'pt', () => {
       map.getCanvas().style.cursor = '';
@@ -327,6 +387,12 @@ export function MapView(props: Props) {
   }
 
   useEffect(render, [props.computed, props.view, props.selectedId, props.selectedGroup, props.resources]);
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !loaded.current) return;
+    for (const id of ROAD_LAYER_IDS) map.setLayoutProperty(id, 'visibility', props.showRoads ? 'visible' : 'none');
+    map.setLayoutProperty('eki', 'visibility', props.showEki ? 'visible' : 'none');
+  }, [props.showRoads, props.showEki]);
   // 再計算や選択解除に合わせて、残したポップアップを更新・閉じる
   useEffect(() => {
     const pinned = pinnedPopup.current;
