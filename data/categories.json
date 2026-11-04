@@ -1,0 +1,115 @@
+{
+  "note": "種別は P12_005 (種別名称) の原文。大分類は日本交通公社「観光資源台帳」の自然資源・人文資源の区分に合わせた対応表。P12_007 (観光資源分類コード) は北海道ファイルで全件 -1 (未設定) のため、分類に使っていない。",
+  "groups": [
+    {
+      "key": "nature",
+      "label": "自然資源"
+    },
+    {
+      "key": "culture",
+      "label": "人文資源"
+    },
+    {
+      "key": "unclassified",
+      "label": "未分類"
+    }
+  ],
+  "kinds": [
+    {
+      "key": "k01",
+      "name": "山岳",
+      "group": "nature",
+      "count": 6
+    },
+    {
+      "key": "k02",
+      "name": "高原・湿原・原野",
+      "group": "nature",
+      "count": 4
+    },
+    {
+      "key": "k03",
+      "name": "湖沼",
+      "group": "nature",
+      "count": 7
+    },
+    {
+      "key": "k04",
+      "name": "河川・峡谷",
+      "group": "nature",
+      "count": 3
+    },
+    {
+      "key": "k05",
+      "name": "海岸・岬",
+      "group": "nature",
+      "count": 1
+    },
+    {
+      "key": "k06",
+      "name": "動物",
+      "group": "nature",
+      "count": 1
+    },
+    {
+      "key": "k07",
+      "name": "植物",
+      "group": "nature",
+      "count": 1
+    },
+    {
+      "key": "k08",
+      "name": "自然現象",
+      "group": "nature",
+      "count": 1
+    },
+    {
+      "key": "k09",
+      "name": "城跡・城郭・宮殿",
+      "group": "culture",
+      "count": 1
+    },
+    {
+      "key": "k10",
+      "name": "集落・街",
+      "group": "culture",
+      "count": 1
+    },
+    {
+      "key": "k11",
+      "name": "郷土景観",
+      "group": "culture",
+      "count": 2
+    },
+    {
+      "key": "k12",
+      "name": "庭園・公園",
+      "group": "culture",
+      "count": 2
+    },
+    {
+      "key": "k13",
+      "name": "年中行事",
+      "group": "culture",
+      "count": 1
+    },
+    {
+      "key": "k14",
+      "name": "動植物園・水族館",
+      "group": "culture",
+      "count": 1
+    },
+    {
+      "key": "k15",
+      "name": "温泉",
+      "group": "culture",
+      "count": 1
+    },
+    {
+      "key": "k16",
+      "name": "食",
+      "group": "culture",
+      "count": 2
+    }
+  ]
+}
