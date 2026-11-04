@@ -6,7 +6,7 @@ import { computeClusters, nearestOf, selectIds, type Computed, type Group } from
 import { cleanTitle, DEFAULTS, parseEdition, parseSettings, serializeSettings } from './urlState';
 import type { AppSettings, CategorySel, Edition, MapPos } from './types';
 import { MapView } from './components/MapView';
-import { Panel } from './components/Panel';
+import { Overlay } from './components/Overlay';
 import { exportPng } from './exportPng';
 import { loadStoredImport, storeImport, type ImportedSet } from './importGeojson';
 
@@ -116,7 +116,6 @@ function Explorer({ data: baseData, onEdition }: { data: LoadedData; onEdition: 
   const [candidates, setCandidates] = useState<number[] | null>(null);
   const [guideOpen, setGuideOpen] = useState(() => !readGuideClosed());
   const [guideStep, setGuideStep] = useState(0);
-  const [sheetExpanded, setSheetExpanded] = useState(false);
   const mapRef = useRef<MLMap | null>(null);
   const initialPos = useRef(settings.map);
 
@@ -211,9 +210,8 @@ function Explorer({ data: baseData, onEdition }: { data: LoadedData; onEdition: 
       setCandidates(null);
       setFocusPoint(viaPoint && id !== null);
       update({ sel: id });
-      if (id !== null && isMobile) setSheetExpanded(true);
     },
-    [update, isMobile],
+    [update],
   );
   const onMove = useCallback((pos: MapPos) => update({ map: pos }), [update]);
 
@@ -274,62 +272,62 @@ function Explorer({ data: baseData, onEdition }: { data: LoadedData; onEdition: 
     return n ? { name: byId.get(n.id)!.name, km: n.km } : null;
   }, [settings.sel, computed, index, byId]);
 
-  const padding = isMobile ? { top: 16, right: 16, bottom: 16, left: 16 } : { top: 30, right: 30, bottom: 30, left: 30 };
+  // 上の札と下の操作バーの分だけ余白をとって北海道全体を収める
+  const padding = isMobile ? { top: 110, right: 12, bottom: 140, left: 12 } : { top: 70, right: 40, bottom: 96, left: 40 };
 
   return (
-    <div className={'app' + (isMobile ? ' is-mobile' : '') + (sheetExpanded ? ' sheet-expanded' : '')}>
-      <MapView
-        resources={resources}
-        computed={computed}
-        view={settings.view}
-        selectedId={settings.sel}
-        selectedGroup={selectedGroup}
-        epsKm={settings.epsKm}
-        showRoads={settings.showRoads}
-        showEki={settings.showEki}
-        showAirports={settings.showAirports}
-        showRail={settings.showRail}
-        showRailHistory={settings.showRailHistory}
-        theme={settings.theme}
-        initialPos={initialPos.current}
-        padding={padding}
-        onSelect={onSelect}
-        onCandidates={setCandidates}
-        onMove={onMove}
-        onReady={(m) => (mapRef.current = m)}
-        onError={setMapError}
-      />
-      <Panel
-        data={data}
-        byId={byId}
-        settings={settings}
-        defaults={DEFAULTS}
-        update={update}
-        computed={computed}
-        selectedGroup={selectedGroup}
-        focusPoint={focusPoint}
-        nearest={nearest}
-        candidates={candidates}
-        onSelect={onSelect}
-        onCloseCandidates={() => setCandidates(null)}
-        guideOpen={guideOpen}
-        guideStep={guideStep}
-        setGuideStep={setGuideStep}
-        openGuide={() => {
-          setGuideStep(0);
-          setGuideOpen(true);
-        }}
-        closeGuide={closeGuide}
-        onShare={share}
-        onSave={save}
-        isMobile={isMobile}
-        sheetExpanded={sheetExpanded}
-        setSheetExpanded={setSheetExpanded}
-        categoryLabel={categoryLabel(settings.cat, data)}
-        imported={imported}
-        onImport={applyImport}
-        onEdition={switchEdition}
-      />
+    <div className={'app' + (isMobile ? ' is-mobile' : '')}>
+      <div className="map-card">
+        <MapView
+          resources={resources}
+          computed={computed}
+          view={settings.view}
+          selectedId={settings.sel}
+          selectedGroup={selectedGroup}
+          epsKm={settings.epsKm}
+          showRoads={settings.showRoads}
+          showEki={settings.showEki}
+          showAirports={settings.showAirports}
+          showRail={settings.showRail}
+          showRailHistory={settings.showRailHistory}
+          theme={settings.theme}
+          initialPos={initialPos.current}
+          padding={padding}
+          onSelect={onSelect}
+          onCandidates={setCandidates}
+          onMove={onMove}
+          onReady={(m) => (mapRef.current = m)}
+          onError={setMapError}
+        />
+        <Overlay
+          data={data}
+          byId={byId}
+          settings={settings}
+          defaults={DEFAULTS}
+          update={update}
+          computed={computed}
+          selectedGroup={selectedGroup}
+          focusPoint={focusPoint}
+          nearest={nearest}
+          candidates={candidates}
+          onSelect={onSelect}
+          onCloseCandidates={() => setCandidates(null)}
+          guideOpen={guideOpen}
+          guideStep={guideStep}
+          setGuideStep={setGuideStep}
+          openGuide={() => {
+            setGuideStep(0);
+            setGuideOpen(true);
+          }}
+          closeGuide={closeGuide}
+          onShare={share}
+          onSave={save}
+          isMobile={isMobile}
+          categoryLabel={categoryLabel(settings.cat, data)}
+          imported={imported}
+          onImport={applyImport}
+          onEdition={switchEdition}
+        />
       <div className="toast-region" aria-live="polite">
         {notice && (
           <div className="toast">
@@ -355,6 +353,7 @@ function Explorer({ data: baseData, onEdition }: { data: LoadedData; onEdition: 
             </button>
           </div>
         )}
+      </div>
       </div>
     </div>
   );
