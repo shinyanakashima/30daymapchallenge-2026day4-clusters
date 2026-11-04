@@ -274,6 +274,14 @@ export function Panel(p: Props) {
                 <i className="lg-airport" />空港
               </label>
               <label className="lg-toggle">
+                <input type="checkbox" checked={settings.showRail} onChange={(e) => update({ showRail: e.target.checked })} />
+                <i className="lg-rail" />鉄道
+              </label>
+              <label className="lg-toggle">
+                <input type="checkbox" checked={settings.showRailHistory} onChange={(e) => update({ showRailHistory: e.target.checked })} />
+                <i className="lg-rail-history" />廃止された路線
+              </label>
+              <label className="lg-toggle">
                 <input type="checkbox" checked={settings.showRoads} onChange={(e) => update({ showRoads: e.target.checked })} />
                 <i className="lg-road" />道路
               </label>
@@ -599,7 +607,15 @@ function About({ data }: { data: LoadedData }) {
         <a href="https://nlftp.mlit.go.jp/ksj/gml/datalist/KsjTmplt-C28-2021.html" target="_blank" rel="noopener">
           国土数値情報（空港）
         </a>
-        （国土交通省、2021年）。背景：
+        （国土交通省、2021年）。鉄道：
+        <a href="https://nlftp.mlit.go.jp/ksj/gml/datalist/KsjTmplt-N05-2025.html" target="_blank" rel="noopener">
+          国土数値情報（鉄道時系列）
+        </a>
+        （国土交通省、2025年度版、非商用。
+        <a href="https://github.com/shinyanakashima/30daymapchallenge-2026day1-station-history" target="_blank" rel="noopener">
+          Day1 作品
+        </a>
+        で加工）。背景：
         <a href="https://maps.gsi.go.jp/development/vt.html" target="_blank" rel="noopener">
           地理院ベクトルタイル
         </a>
@@ -619,6 +635,7 @@ function About({ data }: { data: LoadedData }) {
           </li>
           <li>近い点が連なると、端から端までが設定距離より長いまとまりもできます。設定距離は直径でも移動時間でもありません。</li>
           <li>ズームでは分類は変わりません。色のにじみは、まとまりに入った各地点のまわりに「近所とみなす距離」の半分の範囲を描いたもので、分類の後に描いています。にじみが重なるのは、おおむね地点どうしが設定距離以内のときです。海や山にかかることもあり、にじみの範囲をすべて巡れるという意味ではありません。</li>
+          <li>鉄道は国土数値情報（鉄道時系列、2025年度版・非商用）を Day1 作品「駅のあった北海道」で加工したデータです。2025年末時点で営業中の路線と駅を示し、「廃止された路線」では1950年以降に営業していた区間を破線で重ねます。駅は拡大すると表示されます。</li>
           <li>空港は国土数値情報（空港、2021年）の標点位置です。供用中の空港を光らせ、休止中は白抜きで示します。まとまりの計算には含めていません。</li>
           <li>道の駅は2018年時点の登録を重ねた参考情報で、まとまりの計算には含めていません。道路は地理院ベクトルタイルの道路中心線（高速・国道・道道など）です。</li>
           <li>色は前回のまとまりとの重なりで引き継いでいますが、識別の補助で、まとまりの同一性を保証するものではありません。</li>

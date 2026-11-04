@@ -18,6 +18,8 @@ describe('urlState', () => {
       showRoads: false,
       showEki: true,
       showAirports: false,
+      showRail: true,
+      showRailHistory: true,
       theme: 'night',
     };
     expect(parseSettings('?' + serializeSettings(s), kinds, ids)).toEqual(s);

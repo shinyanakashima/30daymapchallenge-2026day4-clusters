@@ -17,6 +17,8 @@ interface Props {
   showRoads: boolean;
   showEki: boolean;
   showAirports: boolean;
+  showRail: boolean;
+  showRailHistory: boolean;
   theme: MapThemeName;
   initialPos: MapPos | null;
   padding: { top: number; right: number; bottom: number; left: number };
@@ -65,6 +67,75 @@ function ekiImage(t: MapTheme): ImageData {
   return c2.getImageData(0, 0, size * 2, size * 2);
 }
 
+const RAIL_LAYERS = ['rail-glow', 'rail', 'rail-dash', 'station'];
+
+/** 鉄道 (現在の路線・廃止区間・駅)。地名ラベルの下に入れる。 */
+function addRailLayers(map: MLMap, t: MapTheme, show: boolean, showHistory: boolean) {
+  const base = import.meta.env.BASE_URL;
+  const vis = show ? 'visible' : 'none';
+  map.addSource('rail', { type: 'geojson', data: `${base}data/rail.geojson` });
+  map.addSource('rail-history', { type: 'geojson', data: `${base}data/rail-history.geojson` });
+  map.addSource('stations', { type: 'geojson', data: `${base}data/stations.geojson` });
+  const width = (k: number) => ['interpolate', ['linear'], ['zoom'], 5, ['case', ['==', ['get', 'cls'], 'shinkansen'], 2 * k, 1.3 * k], 12, ['case', ['==', ['get', 'cls'], 'shinkansen'], 5 * k, 3 * k]];
+  map.addLayer(
+    {
+      id: 'rail-history',
+      type: 'line',
+      source: 'rail-history',
+      layout: { visibility: showHistory ? 'visible' : 'none', 'line-join': 'round' },
+      paint: { 'line-color': t.railHistory, 'line-width': ['interpolate', ['linear'], ['zoom'], 5, 0.8, 12, 1.6], 'line-dasharray': [2, 2], 'line-opacity': 0.7 },
+    },
+    'place-label',
+  );
+  map.addLayer(
+    {
+      id: 'rail-glow',
+      type: 'line',
+      source: 'rail',
+      layout: { visibility: vis, 'line-join': 'round' },
+      paint: { 'line-color': t.rail, 'line-width': width(4) as never, 'line-blur': 4, 'line-opacity': t.railGlowOpacity },
+    },
+    'place-label',
+  );
+  map.addLayer(
+    {
+      id: 'rail',
+      type: 'line',
+      source: 'rail',
+      layout: { visibility: vis, 'line-join': 'round' },
+      paint: { 'line-color': t.rail, 'line-width': width(1) as never, 'line-opacity': 0.9 },
+    },
+    'place-label',
+  );
+  map.addLayer(
+    {
+      id: 'rail-dash',
+      type: 'line',
+      source: 'rail',
+      minzoom: 7,
+      layout: { visibility: vis },
+      paint: { 'line-color': t.railDash, 'line-width': width(0.45) as never, 'line-dasharray': [3, 3] },
+    },
+    'place-label',
+  );
+  map.addLayer(
+    {
+      id: 'station',
+      type: 'circle',
+      source: 'stations',
+      minzoom: 7,
+      layout: { visibility: vis },
+      paint: {
+        'circle-radius': ['interpolate', ['linear'], ['zoom'], 7, ['case', ['==', ['get', 'major'], 1], 2.6, 1.8], 12, ['case', ['==', ['get', 'major'], 1], 5, 3.6]],
+        'circle-color': t.stationFill,
+        'circle-stroke-color': t.stationStroke,
+        'circle-stroke-width': 1.2,
+      },
+    },
+    'place-label',
+  );
+}
+
 /** データ側レイヤの配色を昼・夜で塗り直す。 */
 function applyDataTheme(map: MLMap, t: MapTheme) {
   setPalette(t.palette);
@@ -85,6 +156,13 @@ function applyDataTheme(map: MLMap, t: MapTheme) {
   map.setPaintProperty('pt', 'circle-color', ['match', ['get', 'state'], 'noise', t.noiseFill, ['get', 'color']]);
   map.setPaintProperty('pt', 'circle-stroke-color', strokeExpr(t));
   map.setPaintProperty('pt-selected', 'circle-stroke-color', t.ink);
+  map.setPaintProperty('rail-history', 'line-color', t.railHistory);
+  map.setPaintProperty('rail-glow', 'line-color', t.rail);
+  map.setPaintProperty('rail-glow', 'line-opacity', t.railGlowOpacity);
+  map.setPaintProperty('rail', 'line-color', t.rail);
+  map.setPaintProperty('rail-dash', 'line-color', t.railDash);
+  map.setPaintProperty('station', 'circle-color', t.stationFill);
+  map.setPaintProperty('station', 'circle-stroke-color', t.stationStroke);
 }
 
 // 空港の光をゆっくり明滅させる。動きを減らす設定では止めたまま (静かな光) にする。
@@ -190,6 +268,7 @@ export function MapView(props: Props) {
     });
 
     map.on('load', () => {
+      addRailLayers(map, T, cb.current.showRail, cb.current.showRailHistory);
       map.addSource('members', { type: 'geojson', data: EMPTY });
       map.addSource('points', { type: 'geojson', data: EMPTY });
       const radius = heatmapRadiusExpr(cb.current.epsKm) as never;
@@ -413,6 +492,29 @@ export function MapView(props: Props) {
         .setDOMContent(el)
         .addTo(map);
     });
+    map.on('mousemove', 'station', (e) => {
+      if (map.queryRenderedFeatures(e.point, { layers: ['pt', 'airport'] }).length) return;
+      const f = e.features?.[0];
+      if (!f) return;
+      hoverPopup.current?.remove();
+      const el = document.createElement('div');
+      el.className = 'pt-popup';
+      const n = document.createElement('p');
+      n.className = 'pt-popup-name';
+      n.textContent = `${f.properties.name}駅`;
+      const m = document.createElement('p');
+      m.className = 'pt-popup-meta';
+      m.textContent = `${f.properties.lines}（${f.properties.operators}）／2025年末時点`;
+      el.append(n, m);
+      hoverPopup.current = new maplibregl.Popup({ closeButton: false, closeOnClick: false, offset: 8, maxWidth: '260px' })
+        .setLngLat((f.geometry as GeoJSON.Point).coordinates as [number, number])
+        .setDOMContent(el)
+        .addTo(map);
+    });
+    map.on('mouseleave', 'station', () => {
+      hoverPopup.current?.remove();
+      hoverPopup.current = null;
+    });
     map.on('mouseleave', 'airport', () => {
       hoverPopup.current?.remove();
       hoverPopup.current = null;
@@ -514,7 +616,9 @@ export function MapView(props: Props) {
     for (const id of ROAD_LAYER_IDS) map.setLayoutProperty(id, 'visibility', props.showRoads ? 'visible' : 'none');
     map.setLayoutProperty('eki', 'visibility', props.showEki ? 'visible' : 'none');
     for (const id of AIRPORT_LAYERS) map.setLayoutProperty(id, 'visibility', props.showAirports ? 'visible' : 'none');
-  }, [props.showRoads, props.showEki, props.showAirports]);
+    for (const id of RAIL_LAYERS) map.setLayoutProperty(id, 'visibility', props.showRail ? 'visible' : 'none');
+    map.setLayoutProperty('rail-history', 'visibility', props.showRailHistory ? 'visible' : 'none');
+  }, [props.showRoads, props.showEki, props.showAirports, props.showRail, props.showRailHistory]);
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !loaded.current) return;

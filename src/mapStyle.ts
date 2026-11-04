@@ -28,6 +28,12 @@ export interface MapTheme {
   ekiFill: string;
   ekiStroke: string;
   blobAlpha: number;
+  rail: string;
+  railDash: string;
+  railGlowOpacity: number;
+  railHistory: string;
+  stationFill: string;
+  stationStroke: string;
   selectedOverlay: string;
   palette: string[];
 }
@@ -58,6 +64,12 @@ export const THEMES: Record<MapThemeName, MapTheme> = {
     ekiFill: '#ffffff',
     ekiStroke: '#7b8494',
     blobAlpha: 0.24,
+    rail: '#4a5262',
+    railDash: '#ffffff',
+    railGlowOpacity: 0,
+    railHistory: '#8e97a8',
+    stationFill: '#ffffff',
+    stationStroke: '#3a4150',
     selectedOverlay: 'rgba(29, 35, 48, 0.1)',
     palette: ['#d9822b', '#1f9e94', '#7b61c9', '#5f9a2e', '#d0573a', '#2f7fc8', '#c2508a', '#2a9d6f'],
   },
@@ -86,6 +98,12 @@ export const THEMES: Record<MapThemeName, MapTheme> = {
     ekiFill: '#0a0c11',
     ekiStroke: '#d8d2c6',
     blobAlpha: 0.22,
+    rail: '#d5dbe6',
+    railDash: '#0d1117',
+    railGlowOpacity: 0.22,
+    railHistory: '#6b7486',
+    stationFill: '#0d1117',
+    stationStroke: '#d5dbe6',
     selectedOverlay: 'rgba(242, 238, 230, 0.1)',
     palette: ['#e3b36b', '#6bc2bd', '#a99ad9', '#a3c47e', '#de8d72', '#7ea8d6', '#d493b3', '#8fcfb3'],
   },
@@ -95,7 +113,7 @@ export const TILE_ATTRIBUTION =
   '<a href="https://maps.gsi.go.jp/development/vt.html" target="_blank" rel="noopener">地理院ベクトルタイル</a>' +
   '｜地形 <a href="https://github.com/tilezen/joerd/blob/master/docs/attribution.md" target="_blank" rel="noopener">Terrain Tiles (Mapzen ほか)</a>';
 export const DATA_ATTRIBUTION =
-  '<a href="https://nlftp.mlit.go.jp/ksj/gml/datalist/KsjTmplt-P12-v2_2.html" target="_blank" rel="noopener">国土数値情報（観光資源 2014年・道の駅 2018年・空港 2021年）国土交通省</a>';
+  '<a href="https://nlftp.mlit.go.jp/ksj/gml/datalist/KsjTmplt-P12-v2_2.html" target="_blank" rel="noopener">国土数値情報（観光資源 2014年・道の駅 2018年・空港 2021年・鉄道時系列 2025年度版）国土交通省</a>';
 
 export const HOKKAIDO_BOUNDS: [[number, number], [number, number]] = [
   [139.3, 41.3],

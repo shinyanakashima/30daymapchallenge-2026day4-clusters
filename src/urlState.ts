@@ -18,6 +18,8 @@ export const DEFAULTS: AppSettings = {
   showRoads: true,
   showEki: true,
   showAirports: true,
+  showRail: true,
+  showRailHistory: false,
   theme: 'day',
 };
 
@@ -76,10 +78,12 @@ export function parseSettings(search: string, validKinds: ReadonlySet<string>, v
   s.title = cleanTitle(q.get('t') ?? '');
   s.theme = q.get('bm') === 'night' ? 'night' : 'day';
   const ov = q.get('ov');
-  if (ov !== null && /^(none|[rea]{1,3})$/.test(ov)) {
+  if (ov !== null && /^(none|[reath]{1,5})$/.test(ov)) {
     s.showRoads = ov.includes('r');
     s.showEki = ov.includes('e');
     s.showAirports = ov.includes('a');
+    s.showRail = ov.includes('t');
+    s.showRailHistory = ov.includes('h');
   }
   return s;
 }
@@ -95,8 +99,13 @@ export function serializeSettings(s: AppSettings): string {
   if (s.map) q.set('map', `${s.map.lon.toFixed(4)},${s.map.lat.toFixed(4)},${s.map.zoom.toFixed(2)}`);
   if (s.title) q.set('t', s.title);
   if (s.theme === 'night') q.set('bm', 'night');
-  if (!s.showRoads || !s.showEki || !s.showAirports) {
-    q.set('ov', (s.showRoads ? 'r' : '') + (s.showEki ? 'e' : '') + (s.showAirports ? 'a' : '') || 'none');
-  }
+  const flags: [boolean, boolean, string][] = [
+    [s.showRoads, DEFAULTS.showRoads, 'r'],
+    [s.showEki, DEFAULTS.showEki, 'e'],
+    [s.showAirports, DEFAULTS.showAirports, 'a'],
+    [s.showRail, DEFAULTS.showRail, 't'],
+    [s.showRailHistory, DEFAULTS.showRailHistory, 'h'],
+  ];
+  if (flags.some(([v, d]) => v !== d)) q.set('ov', flags.map(([v, , c]) => (v ? c : '')).join('') || 'none');
   return q.toString();
 }

@@ -244,6 +244,7 @@ function Explorer({ data: baseData }: { data: LoadedData }) {
       showRoads: settings.showRoads,
       showEki: settings.showEki,
       showAirports: settings.showAirports,
+      showRail: settings.showRail,
       theme: settings.theme,
     });
     const a = document.createElement('a');
@@ -276,6 +277,8 @@ function Explorer({ data: baseData }: { data: LoadedData }) {
         showRoads={settings.showRoads}
         showEki={settings.showEki}
         showAirports={settings.showAirports}
+        showRail={settings.showRail}
+        showRailHistory={settings.showRailHistory}
         theme={settings.theme}
         initialPos={initialPos.current}
         padding={padding}

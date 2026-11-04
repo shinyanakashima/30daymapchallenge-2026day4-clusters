@@ -72,6 +72,9 @@ export interface AppSettings {
   showRoads: boolean;
   showEki: boolean;
   showAirports: boolean;
+  showRail: boolean;
+  /** 廃止された路線も薄く重ねる */
+  showRailHistory: boolean;
   /** 背景地図の昼・夜 */
   theme: 'day' | 'night';
 }

@@ -48,6 +48,16 @@
 
 国土数値情報「道の駅」平成30年（P35-18、非商用）から北海道分 **122 件**（全国 1,145 件）を `public/data/michinoeki.geojson` に抽出。ひし形で重ね、ホバーで名称と市町村を表示する。まとまりの計算には含めない。道路（高速・国道・道道など）とあわせて、パネルの凡例から表示を切り替えられる（URL `ov`）。
 
+### 参考レイヤ：鉄道
+
+国土数値情報「鉄道時系列データ」2025年度版（N05-25、**非商用**、2025年末時点）を、#30DayMapChallenge 2026 Day1「[駅のあった北海道](https://github.com/shinyanakashima/30daymapchallenge-2026day1-station-history)」で北海道向けに加工したデータを、コミットを固定して取得する（`scripts/build-rail.mjs`）。
+
+- `rail.geojson`：2025年末時点で営業中の路線（32 区間）。昼は濃い線に白い破線、夜は淡く光る線
+- `rail-history.geojson`：1950年以降に営業していた区間（213 区間、重複除く）。「廃止された路線」で破線を重ねる（初期は非表示）
+- `stations.geojson`：2025年末時点で営業中の駅（422 駅）。ズーム 7 以上で表示し、ホバーで路線・事業者を表示
+- 線は Douglas–Peucker（許容 約20m）で間引いた。まとまりの計算には含めない
+- CC BY の N02「鉄道データ」とは別製品で、利用条件が異なる
+
 ### 参考レイヤ：空港
 
 国土数値情報「空港」令和3年（C28-21、**商用可**、基準日 2021年12月31日）から、行政区域コードが北海道（01）の空港を標点位置の点にした（`public/data/airports.geojson`、13 件。うち礼文空港は休止中）。供用中の空港をゆっくり明滅する光で示し、休止中は白抜き。`prefers-reduced-motion` では明滅しない。まとまりの計算には含めない。
@@ -113,7 +123,7 @@
 | `map` | `経度,緯度,ズーム` |
 | `t` | 特集タイトル（40 字まで、テキストとして表示） |
 | `bm` | `night` で夜の背景地図。省略時は昼 |
-| `ov` | 参考レイヤ：`r`（道路）・`e`（道の駅）・`a`（空港）の組み合わせ、`none`。省略時はすべて表示 |
+| `ov` | 参考レイヤ：`r`（道路）・`e`（道の駅）・`a`（空港）・`t`（鉄道）・`h`（廃止された路線）の組み合わせ、`none`。省略時は廃止された路線以外を表示 |
 
 不正な値はその項目だけ初期値に戻す。
 
@@ -130,7 +140,7 @@ npm run data:fetch   # 観光資源（北海道）・道の駅（全国）・空
 ```
 
 ```bash
-npm run data:build   # public/data/ の GeoJSON・カテゴリ表・manifest・道の駅・空港を生成
+npm run data:build   # public/data/ の GeoJSON・カテゴリ表・manifest・道の駅・空港・鉄道を生成（鉄道は Day1 リポジトリから取得）
 ```
 
 ```bash
@@ -159,6 +169,7 @@ npm test && npm run build   # 検証とビルド（dist/ に出力）
 ## 出典
 
 - 国土数値情報（観光資源データ）国土交通省 https://nlftp.mlit.go.jp/ksj/gml/datalist/KsjTmplt-P12-v2_2.html
+- 国土数値情報（鉄道時系列データ）国土交通省 https://nlftp.mlit.go.jp/ksj/gml/datalist/KsjTmplt-N05-2025.html（Day1 作品で加工）
 - 国土数値情報（空港データ）国土交通省 https://nlftp.mlit.go.jp/ksj/gml/datalist/KsjTmplt-C28-2021.html
 - 国土数値情報（道の駅データ）国土交通省 https://nlftp.mlit.go.jp/ksj/gml/datalist/KsjTmplt-P35.html
 - 地理院ベクトルタイル 国土地理院 https://maps.gsi.go.jp/development/vt.html

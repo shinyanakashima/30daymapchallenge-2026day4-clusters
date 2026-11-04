@@ -20,6 +20,7 @@ export interface ExportInfo {
   showRoads: boolean;
   showEki: boolean;
   showAirports: boolean;
+  showRail: boolean;
   theme: MapThemeName;
 }
 
@@ -228,7 +229,7 @@ export async function exportPng(
   ctx.fillText(info.userCount ? `${DATA_CREDIT}＋利用者の追加データ ${info.userCount} 地点` : DATA_CREDIT, 20 * s, fy + 70 * s);
   const tile = mapCanvas ? TILE_CREDIT : '背景地図は取得できなかったため省略';
   ctx.fillText(tile, 20 * s, fy + 88 * s);
-  const overlays = [info.showEki ? '道の駅（2018年）' : '', info.showAirports ? '空港（2021年）' : ''].filter(Boolean);
+  const overlays = [info.showEki ? '道の駅（2018年）' : '', info.showAirports ? '空港（2021年）' : '', info.showRail ? '鉄道（鉄道時系列 2025年度版）' : ''].filter(Boolean);
   if (overlays.length && mapCanvas) ctx.fillText(`${overlays.join('・')}：国土数値情報 国土交通省`, 20 * s, fy + 106 * s);
 
   const blob = await new Promise<Blob | null>((res) => canvas.toBlob(res, 'image/png'));
