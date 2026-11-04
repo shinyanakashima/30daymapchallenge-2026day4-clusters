@@ -1,0 +1,71 @@
+export type GroupKey = 'nature' | 'culture' | 'unclassified';
+
+export interface Municipality {
+  code: string;
+  name: string | null;
+}
+
+export interface Resource {
+  id: number;
+  name: string;
+  kind: string;
+  kindKey: string;
+  group: GroupKey;
+  address: string;
+  municipalities: Municipality[];
+  lon: number;
+  lat: number;
+}
+
+export interface KindDef {
+  key: string;
+  name: string;
+  group: GroupKey;
+  count: number;
+}
+
+export interface Categories {
+  note: string;
+  groups: { key: GroupKey; label: string }[];
+  kinds: KindDef[];
+}
+
+export interface Manifest {
+  source: {
+    name: string;
+    publisher: string;
+    pageUrl: string;
+    downloadUrl: string;
+    referenceDate: string;
+    fetchedAt: string | null;
+    license: string;
+    licenseUrl: string;
+  };
+  stats: { validPoints: number; totalRecords: number };
+  notes: string[];
+}
+
+/** カテゴリ指定: すべて / 大分類 / 種別キーの集合 */
+export type CategorySel =
+  | { type: 'all' }
+  | { type: 'group'; group: GroupKey }
+  | { type: 'kinds'; keys: string[] };
+
+export type ViewMode = 'clusters' | 'points';
+
+export interface MapPos {
+  lon: number;
+  lat: number;
+  zoom: number;
+}
+
+export interface AppSettings {
+  epsKm: number;
+  minPts: number;
+  cat: CategorySel;
+  /** 選択している資源 ID。グループはこの資源を含むものとして復元する。 */
+  sel: number | null;
+  view: ViewMode;
+  map: MapPos | null;
+  title: string;
+}

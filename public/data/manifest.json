@@ -1,0 +1,131 @@
+{
+  "title": "北海道、旅のまとまりを探して。配信データ",
+  "source": {
+    "name": "国土数値情報 観光資源データ 第2.2版 (P12-14) 北海道",
+    "publisher": "国土交通省 国土政策局",
+    "downloadUrl": "https://nlftp.mlit.go.jp/ksj/gml/data/P12/P12-14/P12-14_01_GML.zip",
+    "pageUrl": "https://nlftp.mlit.go.jp/ksj/gml/datalist/KsjTmplt-P12-v2_2.html",
+    "originalSources": "日本交通公社 観光資源評価委員会「観光資源台帳」(A級以上)、観光庁「観光地点等名簿」ほか",
+    "referenceDate": "2014-09-30",
+    "fetchedAt": "2026-11-04",
+    "license": "非商用 (配布ページの使用許諾条件)",
+    "licenseUrl": "https://nlftp.mlit.go.jp/ksj/other/agreement.html"
+  },
+  "layerUsed": "P12a-14_01.shp (観光資源・点)",
+  "layersNotUsed": [
+    {
+      "file": "P12b-14_01.shp",
+      "reason": "線。同じ資源が点レイヤにもあるため、代表点化して足すと二重計数になる"
+    },
+    {
+      "file": "P12c-14_01.shp",
+      "reason": "面。同じ資源が点レイヤにもあるため、代表点化して足すと二重計数になる"
+    }
+  ],
+  "crs": {
+    "sourcePrj": "GEOGCS[\"GCS_JGD_2000\",DATUM[\"D_JGD_2000\",SPHEROID[\"GRS_1980\",6378137.0,298.257222101]],PRIMEM[\"Greenwich\",0.0],UNIT[\"Degree\",0.0174532925199433]]",
+    "sourceNote": ".prj と GML は JGD2000、配布ページとメタデータの範囲記述は JGD2011 と表記。いずれも地理座標 (緯度経度)。",
+    "output": "EPSG:4326",
+    "transform": "座標値をそのまま EPSG:4326 として扱い、小数第 7 位で丸めた。JGD2000/JGD2011 と WGS84 の差は本作品の縮尺 (数 km〜数十 km の距離判定) と元データの位置正確度 (図上 0.3mm 以内) に比べて無視できる。"
+  },
+  "fields": [
+    {
+      "name": "P12_001",
+      "type": "N",
+      "length": 5
+    },
+    {
+      "name": "P12_002",
+      "type": "C",
+      "length": 100
+    },
+    {
+      "name": "P12_003",
+      "type": "C",
+      "length": 2
+    },
+    {
+      "name": "P12_004",
+      "type": "C",
+      "length": 120
+    },
+    {
+      "name": "P12_005",
+      "type": "C",
+      "length": 100
+    },
+    {
+      "name": "P12_006",
+      "type": "C",
+      "length": 254
+    },
+    {
+      "name": "P12_007",
+      "type": "N",
+      "length": 2
+    }
+  ],
+  "fieldMapping": {
+    "P12_001": "id (観光資源ID)",
+    "P12_002": "name (名称)",
+    "P12_003": "pref (都道府県コード)",
+    "P12_004": "municipalities[].code (行政区域コード、複数は「、」区切り)",
+    "P12_005": "kind (種別名称)",
+    "P12_006": "address / municipalities[].name (所在地住所、複数は「および」区切り。2014年3月時点)",
+    "P12_007": "categoryCode (観光資源分類コード。北海道は全件 -1)"
+  },
+  "encoding": "dbf: Shift_JIS (CP932)",
+  "stats": {
+    "totalRecords": 35,
+    "validPoints": 35,
+    "excluded": 0,
+    "missingByField": {
+      "P12_001": 0,
+      "P12_002": 0,
+      "P12_003": 0,
+      "P12_004": 0,
+      "P12_005": 0,
+      "P12_006": 0,
+      "P12_007": 35
+    },
+    "duplicateIds": 0,
+    "sameCoordinateGroups": [],
+    "bbox": [
+      140.6860529,
+      41.7592132,
+      145.332432,
+      45.2900856
+    ],
+    "byKind": {
+      "山岳": 6,
+      "高原・湿原・原野": 4,
+      "湖沼": 7,
+      "河川・峡谷": 3,
+      "海岸・岬": 1,
+      "動物": 1,
+      "植物": 1,
+      "自然現象": 1,
+      "城跡・城郭・宮殿": 1,
+      "集落・街": 1,
+      "郷土景観": 2,
+      "庭園・公園": 2,
+      "年中行事": 1,
+      "動植物園・水族館": 1,
+      "温泉": 1,
+      "食": 2
+    },
+    "byGroup": {
+      "自然資源": 24,
+      "人文資源": 11,
+      "未分類": 0
+    }
+  },
+  "excludedRecords": [],
+  "notes": [
+    "点は施設入口ではなく、資源の中心部などの代表位置。",
+    "同じ座標を持つ別資源は削除せず、すべて保持する。",
+    "2014年時点の評価・名簿に基づくデータで、現在の営業や入場可否を示さない。北海道のすべての観光スポットを網羅するものではない。",
+    "自治体名は同じレコードの所在地住所 (2014年3月時点) から取り、行政区域コードと同じ年代で対応させている。"
+  ],
+  "generatedAt": "2026-11-04"
+}
