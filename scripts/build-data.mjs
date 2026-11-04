@@ -126,7 +126,7 @@ const categories = {
 };
 
 const manifest = {
-  title: '北海道、旅のまとまりを探して。配信データ',
+  title: 'Shabon Hokkaido 配信データ',
   source: {
     name: '国土数値情報 観光資源データ 第2.2版 (P12-14) 北海道',
     publisher: '国土交通省 国土政策局',

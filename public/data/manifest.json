@@ -1,5 +1,5 @@
 {
-  "title": "北海道、旅のまとまりを探して。配信データ",
+  "title": "Shabon Hokkaido 配信データ",
   "source": {
     "name": "国土数値情報 観光資源データ 第2.2版 (P12-14) 北海道",
     "publisher": "国土交通省 国土政策局",
@@ -127,5 +127,47 @@
     "2014年時点の評価・名簿に基づくデータで、現在の営業や入場可否を示さない。北海道のすべての観光スポットを網羅するものではない。",
     "自治体名は同じレコードの所在地住所 (2014年3月時点) から取り、行政区域コードと同じ年代で対応させている。"
   ],
-  "generatedAt": "2026-11-04"
+  "generatedAt": "2026-11-04",
+  "overlays": {
+    "michinoeki": {
+      "name": "国土数値情報 道の駅データ 平成30年 (P35-18)",
+      "publisher": "国土交通省",
+      "pageUrl": "https://nlftp.mlit.go.jp/ksj/gml/datalist/KsjTmplt-P35.html",
+      "downloadUrl": "https://nlftp.mlit.go.jp/ksj/gml/data/P35/P35-18/P35-18_GML.zip",
+      "license": "非商用 (配布ページの使用許諾条件)",
+      "crs": "JGD2011 地理座標を EPSG:4326 として扱う",
+      "filter": "P35_003 (都道府県名) が「北海道」",
+      "countAll": 1145,
+      "count": 122,
+      "note": "参考レイヤ。クラスタリングの対象には含めない。2018年時点の登録で、現在の営業を示さない。"
+    },
+    "airports": {
+      "name": "国土数値情報 空港データ 令和3年 (C28-21)",
+      "publisher": "国土交通省",
+      "pageUrl": "https://nlftp.mlit.go.jp/ksj/gml/datalist/KsjTmplt-C28-2021.html",
+      "downloadUrl": "https://nlftp.mlit.go.jp/ksj/gml/data/C28/C28-21/C28-21_GML.zip",
+      "referenceDate": "2021-12-31",
+      "license": "商用可 (配布ページの使用許諾条件)",
+      "method": "空港 (C28_001 行政区域コードが 01 で始まるもの) を標点 (C28_101 → AirportReferencePoint) の位置で点にした。同じ標点を持つ地物は 1 件にまとめた。",
+      "count": 13,
+      "statuses": {
+        "供用中": 12,
+        "休止中": 1
+      },
+      "note": "参考レイヤ。クラスタリングの対象には含めない。"
+    },
+    "rail": {
+      "name": "国土数値情報 鉄道時系列データ 2025年度版 (N05-25)",
+      "publisher": "国土交通省",
+      "pageUrl": "https://nlftp.mlit.go.jp/ksj/gml/datalist/KsjTmplt-N05-2025.html",
+      "license": "非商用 (原典に有償刊行物を含む。CC BY の N02 とは別製品)",
+      "referenceDate": "2025年末",
+      "via": "#30DayMapChallenge 2026 Day1「駅のあった北海道」の加工済みデータ https://github.com/shinyanakashima/30daymapchallenge-2026day1-station-history/tree/5906139f5f3e8ba44b7b7f1f689a95b0503dc939/public/data",
+      "method": "営業期間の終了年が2025以上の路線区間を現在の路線、全期間の区間 (重複除く) を履歴とした。駅は2025年に有効なレコードを持つ物理的な駅。線は Douglas–Peucker (許容 0.0002度≒20m) で間引き、小数第5位に丸めた。",
+      "activeSections": 32,
+      "historySections": 213,
+      "stations": 422,
+      "note": "参考レイヤ。クラスタリングの対象には含めない。"
+    }
+  }
 }

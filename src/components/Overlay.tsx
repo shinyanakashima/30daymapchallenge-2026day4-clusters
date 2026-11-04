@@ -182,8 +182,11 @@ export function Overlay(p: Props) {
       {/* 左上: タイトル */}
       <header className="float title-chip">
         <div>
-          <h1 className="title">北海道、旅のまとまりを探して。</h1>
-          {!p.isMobile && <p className="subtitle">クラスターにすると見えてくる</p>}
+          <h1 className="title">Shabon Hokkaido</h1>
+          <p className="subtitle">
+            <span className="tagline">How Near Is Near?</span>
+            {!p.isMobile && <>｜{'北海道の観光地を、距離でまとめる地図'}</>}
+          </p>
           {settings.title && <p className="feature-title">特集：{settings.title}</p>}
         </div>
         <button type="button" className="round-button" onClick={p.openGuide} aria-label="操作ガイドを開く" title="操作ガイド">

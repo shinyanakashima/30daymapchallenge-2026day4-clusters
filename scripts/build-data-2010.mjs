@@ -124,7 +124,7 @@ const categories = {
   kinds,
 };
 const manifest = {
-  title: '北海道、旅のまとまりを探して。配信データ (2010年度版・比較用)',
+  title: 'Shabon Hokkaido 配信データ (2010年度版・比較用)',
   edition: '2010',
   source: {
     name: '国土数値情報 観光資源データ 第2.0版 (P12-10) 全国から北海道を抽出',

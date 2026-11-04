@@ -97,7 +97,7 @@ export async function exportPng(
   ctx.fillStyle = INK;
   ctx.textBaseline = 'alphabetic';
   ctx.font = `600 ${20 * s}px ${FONT}`;
-  ctx.fillText(info.title || '北海道、旅のまとまりを探して。', 20 * s, 34 * s);
+  ctx.fillText(info.title || 'Shabon Hokkaido — How Near Is Near?', 20 * s, 34 * s);
   ctx.font = `${12.5 * s}px ${FONT}`;
   ctx.fillStyle = SUB;
   const counts = computed ? `対象 ${computed.targetIds.length} 地点・まとまり ${computed.groups.length}・孤立点 ${computed.noise.length}` : '';
