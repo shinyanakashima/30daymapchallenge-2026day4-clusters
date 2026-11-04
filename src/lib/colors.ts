@@ -1,14 +1,13 @@
-/** 暗い背景で見分けやすい 8 色。色は識別の補助で、同一性を保証しない。 */
-export const PALETTE = [
-  '#e3b36b', // 琥珀
-  '#6bc2bd', // 青緑
-  '#a99ad9', // 藤
-  '#a3c47e', // 若草
-  '#de8d72', // 赤土
-  '#7ea8d6', // 浅葱
-  '#d493b3', // 撫子
-  '#8fcfb3', // 薄荷
-] as const;
+/**
+ * まとまりの色 8 色。色は識別の補助で、同一性を保証しない。
+ * 地図の昼・夜で中身を差し替える (番号の対応は同じなので、色の引き継ぎは変わらない)。
+ */
+export const PALETTE: string[] = ['#d9822b', '#1f9e94', '#7b61c9', '#5f9a2e', '#d0573a', '#2f7fc8', '#c2508a', '#2a9d6f'];
+export const PALETTE_SIZE = 8;
+
+export function setPalette(colors: readonly string[]) {
+  for (let i = 0; i < PALETTE_SIZE; i++) PALETTE[i] = colors[i];
+}
 
 export interface ColoredGroup {
   members: readonly number[];
@@ -20,7 +19,7 @@ export function memberColor(members: readonly number[]): number {
   const min = Math.min(...members);
   let h = (min * 2654435761) >>> 0;
   h = (h ^ (h >>> 16)) >>> 0;
-  return h % PALETTE.length;
+  return h % PALETTE_SIZE;
 }
 
 /**
@@ -70,8 +69,8 @@ export function assignColors(groups: readonly (readonly number[])[], prev: reado
   for (const { g } of rest) {
     const base = memberColor(groups[g]);
     let c = base;
-    for (let k = 0; k < PALETTE.length; k++) {
-      const cand = (base + k) % PALETTE.length;
+    for (let k = 0; k < PALETTE_SIZE; k++) {
+      const cand = (base + k) % PALETTE_SIZE;
       if (!used.has(cand)) {
         c = cand;
         break;

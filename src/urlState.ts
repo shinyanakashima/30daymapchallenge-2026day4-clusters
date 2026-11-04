@@ -18,6 +18,7 @@ export const DEFAULTS: AppSettings = {
   showRoads: true,
   showEki: true,
   showAirports: true,
+  theme: 'day',
 };
 
 const GROUPS: GroupKey[] = ['nature', 'culture', 'unclassified', 'user'];
@@ -73,6 +74,7 @@ export function parseSettings(search: string, validKinds: ReadonlySet<string>, v
   s.view = q.get('view') === 'points' ? 'points' : 'clusters';
   s.map = parseMap(q.get('map'));
   s.title = cleanTitle(q.get('t') ?? '');
+  s.theme = q.get('bm') === 'night' ? 'night' : 'day';
   const ov = q.get('ov');
   if (ov !== null && /^(none|[rea]{1,3})$/.test(ov)) {
     s.showRoads = ov.includes('r');
@@ -92,6 +94,7 @@ export function serializeSettings(s: AppSettings): string {
   if (s.view === 'points') q.set('view', 'points');
   if (s.map) q.set('map', `${s.map.lon.toFixed(4)},${s.map.lat.toFixed(4)},${s.map.zoom.toFixed(2)}`);
   if (s.title) q.set('t', s.title);
+  if (s.theme === 'night') q.set('bm', 'night');
   if (!s.showRoads || !s.showEki || !s.showAirports) {
     q.set('ov', (s.showRoads ? 'r' : '') + (s.showEki ? 'e' : '') + (s.showAirports ? 'a' : '') || 'none');
   }

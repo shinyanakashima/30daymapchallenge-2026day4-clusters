@@ -226,6 +226,18 @@ export function Panel(p: Props) {
             <button type="button" className="btn btn-quiet" onClick={p.openGuide}>
               ガイド
             </button>
+            <div className="seg seg-small" role="radiogroup" aria-label="背景地図">
+              {(
+                [
+                  ['day', '昼'],
+                  ['night', '夜'],
+                ] as const
+              ).map(([key, label]) => (
+                <button key={key} type="button" role="radio" aria-checked={settings.theme === key} onClick={() => update({ theme: key })}>
+                  {label}
+                </button>
+              ))}
+            </div>
           </div>
         </header>
 

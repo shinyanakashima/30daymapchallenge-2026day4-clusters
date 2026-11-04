@@ -244,6 +244,7 @@ function Explorer({ data: baseData }: { data: LoadedData }) {
       showRoads: settings.showRoads,
       showEki: settings.showEki,
       showAirports: settings.showAirports,
+      theme: settings.theme,
     });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(res.blob);
@@ -261,7 +262,7 @@ function Explorer({ data: baseData }: { data: LoadedData }) {
     return n ? { name: byId.get(n.id)!.name, km: n.km } : null;
   }, [settings.sel, computed, index, byId]);
 
-  const padding = isMobile ? { top: 20, right: 20, bottom: Math.round(window.innerHeight * 0.42), left: 20 } : { top: 30, right: 400, bottom: 30, left: 30 };
+  const padding = isMobile ? { top: 16, right: 16, bottom: 16, left: 16 } : { top: 30, right: 30, bottom: 30, left: 30 };
 
   return (
     <div className={'app' + (isMobile ? ' is-mobile' : '') + (sheetExpanded ? ' sheet-expanded' : '')}>
@@ -275,6 +276,7 @@ function Explorer({ data: baseData }: { data: LoadedData }) {
         showRoads={settings.showRoads}
         showEki={settings.showEki}
         showAirports={settings.showAirports}
+        theme={settings.theme}
         initialPos={initialPos.current}
         padding={padding}
         onSelect={onSelect}

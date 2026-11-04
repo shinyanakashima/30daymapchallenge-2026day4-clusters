@@ -1,11 +1,11 @@
 import { useEffect, useRef } from 'react';
 import maplibregl, { type GeoJSONSource, type Map as MLMap, type MapGeoJSONFeature } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
-import { PALETTE } from '../lib/colors';
+import { PALETTE, setPalette } from '../lib/colors';
 import type { Computed, Group } from '../model';
 import type { MapPos, Resource, ViewMode } from '../types';
 import { BLOB_THRESHOLD, blobRadiusKm, heatmapRadiusExpr, hexToRgba, metersPerPixel } from '../blob';
-import { baseStyle, DATA_ATTRIBUTION, HOKKAIDO_BOUNDS, INK, MAP_BG, NOISE_FILL, NOISE_STROKE, PLAIN_POINT, ROAD_LAYER_IDS } from '../mapStyle';
+import { applyBaseTheme, buildBaseStyle, DATA_ATTRIBUTION, HOKKAIDO_BOUNDS, ROAD_LAYER_IDS, THEMES, type MapTheme, type MapThemeName } from '../mapStyle';
 
 interface Props {
   resources: Resource[];
@@ -17,6 +17,7 @@ interface Props {
   showRoads: boolean;
   showEki: boolean;
   showAirports: boolean;
+  theme: MapThemeName;
   initialPos: MapPos | null;
   padding: { top: number; right: number; bottom: number; left: number };
   onSelect: (id: number | null) => void;
@@ -27,11 +28,68 @@ interface Props {
 }
 
 const EMPTY: GeoJSON.FeatureCollection = { type: 'FeatureCollection', features: [] };
-const AIRPORT = '#ffd98a';
 const AIRPORT_LAYERS = ['airport-halo', 'airport-glow', 'airport'];
+
+function blobColor(hex: string, alpha: number) {
+  return [
+    'interpolate', ['linear'], ['heatmap-density'],
+    0, 'rgba(0,0,0,0)',
+    BLOB_THRESHOLD * 0.6, hexToRgba(hex, 0),
+    BLOB_THRESHOLD * 1.4, hexToRgba(hex, alpha),
+    1, hexToRgba(hex, alpha + 0.04),
+  ];
+}
+
+function strokeExpr(t: MapTheme) {
+  return ['case', ['==', ['get', 'inSelected'], 1], t.ink, ['match', ['get', 'state'], 'noise', t.noiseStroke, t.memberStroke]] as never;
+}
+
+/** 道の駅のひし形アイコン */
+function ekiImage(t: MapTheme): ImageData {
+  const size = 14;
+  const cv = document.createElement('canvas');
+  cv.width = cv.height = size * 2;
+  const c2 = cv.getContext('2d')!;
+  c2.scale(2, 2);
+  c2.beginPath();
+  c2.moveTo(size / 2, 1.5);
+  c2.lineTo(size - 1.5, size / 2);
+  c2.lineTo(size / 2, size - 1.5);
+  c2.lineTo(1.5, size / 2);
+  c2.closePath();
+  c2.fillStyle = t.ekiFill;
+  c2.fill();
+  c2.lineWidth = 1.6;
+  c2.strokeStyle = t.ekiStroke;
+  c2.stroke();
+  return c2.getImageData(0, 0, size * 2, size * 2);
+}
+
+/** データ側レイヤの配色を昼・夜で塗り直す。 */
+function applyDataTheme(map: MLMap, t: MapTheme) {
+  setPalette(t.palette);
+  pulseStrength = t.airportGlow;
+  map.setPaintProperty('airport-glow', 'circle-opacity', 0.5 * t.airportGlow);
+  t.palette.forEach((hex, i) => map.setPaintProperty(`blob-${i}`, 'heatmap-color', blobColor(hex, t.blobAlpha)));
+  map.setPaintProperty('blob-selected', 'heatmap-color', [
+    'interpolate', ['linear'], ['heatmap-density'],
+    0, 'rgba(0,0,0,0)', BLOB_THRESHOLD * 0.6, 'rgba(0,0,0,0)', BLOB_THRESHOLD * 1.4, t.selectedOverlay, 1, t.selectedOverlay,
+  ]);
+  map.updateImage('eki', ekiImage(t));
+  map.setPaintProperty('airport-halo', 'circle-color', t.airport);
+  map.setPaintProperty('airport-glow', 'circle-color', t.airport);
+  const inService = ['==', ['get', 'status'], '供用中'];
+  map.setPaintProperty('airport', 'circle-color', ['case', inService, t.airportCore, t.noiseFill]);
+  map.setPaintProperty('airport', 'circle-stroke-color', ['case', inService, t.airport, t.noiseStroke]);
+  map.setPaintProperty('pt-dim', 'circle-color', t.noiseStroke);
+  map.setPaintProperty('pt', 'circle-color', ['match', ['get', 'state'], 'noise', t.noiseFill, ['get', 'color']]);
+  map.setPaintProperty('pt', 'circle-stroke-color', strokeExpr(t));
+  map.setPaintProperty('pt-selected', 'circle-stroke-color', t.ink);
+}
 
 // 空港の光をゆっくり明滅させる。動きを減らす設定では止めたまま (静かな光) にする。
 let pulseFrame = 0;
+let pulseStrength = 1; // 昼は背景が明るいので光を強める
 function startPulse(map: MLMap) {
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
   const t0 = performance.now();
@@ -43,7 +101,7 @@ function startPulse(map: MLMap) {
     const k = (Math.sin(((now - t0) / 2600) * Math.PI * 2) + 1) / 2;
     if (!map.getLayer('airport-halo')) return;
     map.setPaintProperty('airport-halo', 'circle-radius', 13 + 9 * k);
-    map.setPaintProperty('airport-halo', 'circle-opacity', 0.28 - 0.14 * k);
+    map.setPaintProperty('airport-halo', 'circle-opacity', (0.28 - 0.14 * k) * pulseStrength);
   };
   pulseFrame = requestAnimationFrame(tick);
 }
@@ -92,9 +150,12 @@ export function MapView(props: Props) {
   useEffect(() => {
     if (!container.current) return;
     const p = cb.current;
+    const T = THEMES[p.theme];
+    setPalette(T.palette);
+    pulseStrength = T.airportGlow;
     const map = new maplibregl.Map({
       container: container.current,
-      style: baseStyle,
+      style: buildBaseStyle(T),
       bounds: p.initialPos ? undefined : HOKKAIDO_BOUNDS,
       center: p.initialPos ? [p.initialPos.lon, p.initialPos.lat] : undefined,
       zoom: p.initialPos?.zoom,
@@ -110,7 +171,7 @@ export function MapView(props: Props) {
     map.touchZoomRotate.disableRotation();
     map.keyboard.disableRotation();
     map.addControl(new maplibregl.AttributionControl({ compact: false, customAttribution: DATA_ATTRIBUTION }), 'bottom-left');
-    map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-left');
+    map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'bottom-right');
     mapRef.current = map;
 
     let tileErrors = 0;
@@ -133,7 +194,7 @@ export function MapView(props: Props) {
       map.addSource('points', { type: 'geojson', data: EMPTY });
       const radius = heatmapRadiusExpr(cb.current.epsKm) as never;
       // 色ごとに heatmap を分け、重なっても 1 つのなめらかなにじみになるようにする
-      PALETTE.forEach((hex, i) => {
+      [...PALETTE].forEach((hex, i) => {
         map.addLayer({
           id: `blob-${i}`,
           type: 'heatmap',
@@ -144,13 +205,7 @@ export function MapView(props: Props) {
             'heatmap-intensity': 1,
             'heatmap-radius': radius,
             // 輪郭線は付けず、縁をぼかした一様な塗りにする
-            'heatmap-color': [
-              'interpolate', ['linear'], ['heatmap-density'],
-              0, 'rgba(0,0,0,0)',
-              BLOB_THRESHOLD * 0.6, hexToRgba(hex, 0),
-              BLOB_THRESHOLD * 1.4, hexToRgba(hex, 0.22),
-              1, hexToRgba(hex, 0.26),
-            ],
+            'heatmap-color': blobColor(hex, T.blobAlpha) as never,
           },
         });
       });
@@ -167,30 +222,14 @@ export function MapView(props: Props) {
           'heatmap-color': [
             'interpolate', ['linear'], ['heatmap-density'],
             0, 'rgba(0,0,0,0)',
-            BLOB_THRESHOLD * 0.6, hexToRgba(INK, 0),
-            BLOB_THRESHOLD * 1.4, hexToRgba(INK, 0.1),
-            1, hexToRgba(INK, 0.1),
+            BLOB_THRESHOLD * 0.6, 'rgba(0,0,0,0)',
+            BLOB_THRESHOLD * 1.4, T.selectedOverlay,
+            1, T.selectedOverlay,
           ],
         },
       });
       // 道の駅 (参考レイヤ): ひし形のアイコン
-      const size = 14;
-      const cv = document.createElement('canvas');
-      cv.width = cv.height = size * 2;
-      const c2 = cv.getContext('2d')!;
-      c2.scale(2, 2);
-      c2.beginPath();
-      c2.moveTo(size / 2, 1.5);
-      c2.lineTo(size - 1.5, size / 2);
-      c2.lineTo(size / 2, size - 1.5);
-      c2.lineTo(1.5, size / 2);
-      c2.closePath();
-      c2.fillStyle = '#0a0c11';
-      c2.fill();
-      c2.lineWidth = 1.6;
-      c2.strokeStyle = '#d8d2c6';
-      c2.stroke();
-      map.addImage('eki', c2.getImageData(0, 0, size * 2, size * 2), { pixelRatio: 2 });
+      map.addImage('eki', ekiImage(T), { pixelRatio: 2 });
       map.addSource('eki', { type: 'geojson', data: `${import.meta.env.BASE_URL}data/michinoeki.geojson` });
       map.addLayer({
         id: 'eki',
@@ -216,7 +255,7 @@ export function MapView(props: Props) {
         source: 'airports',
         filter: inService,
         layout: { visibility: apVis },
-        paint: { 'circle-radius': 16, 'circle-color': AIRPORT, 'circle-opacity': 0.22, 'circle-blur': 1 },
+        paint: { 'circle-radius': 16, 'circle-color': T.airport, 'circle-opacity': 0.22, 'circle-blur': 1 },
       });
       map.addLayer({
         id: 'airport-glow',
@@ -224,7 +263,7 @@ export function MapView(props: Props) {
         source: 'airports',
         filter: inService,
         layout: { visibility: apVis },
-        paint: { 'circle-radius': 7, 'circle-color': AIRPORT, 'circle-opacity': 0.5, 'circle-blur': 0.8 },
+        paint: { 'circle-radius': 7, 'circle-color': T.airport, 'circle-opacity': Math.min(1, 0.5 * T.airportGlow), 'circle-blur': 0.8 },
       });
       map.addLayer({
         id: 'airport',
@@ -233,8 +272,8 @@ export function MapView(props: Props) {
         layout: { visibility: apVis },
         paint: {
           'circle-radius': 3.6,
-          'circle-color': ['case', inService, '#fff7e6', MAP_BG],
-          'circle-stroke-color': ['case', inService, AIRPORT, '#8f8b84'],
+          'circle-color': ['case', inService, T.airportCore, T.noiseFill],
+          'circle-stroke-color': ['case', inService, T.airport, T.noiseStroke],
           'circle-stroke-width': ['case', inService, 1, 1.4],
         },
       });
@@ -245,7 +284,7 @@ export function MapView(props: Props) {
         type: 'circle',
         source: 'points',
         filter: ['==', ['get', 'state'], 'dim'],
-        paint: { 'circle-radius': 2.5, 'circle-color': NOISE_STROKE, 'circle-opacity': 0.25 },
+        paint: { 'circle-radius': 2.5, 'circle-color': T.noiseStroke, 'circle-opacity': 0.25 },
       });
       map.addLayer({
         id: 'pt',
@@ -254,8 +293,8 @@ export function MapView(props: Props) {
         filter: ['!=', ['get', 'state'], 'dim'],
         paint: {
           'circle-radius': ['match', ['get', 'state'], 'member', 5, 'noise', 4.5, 4.5],
-          'circle-color': ['match', ['get', 'state'], 'noise', NOISE_FILL, ['get', 'color']],
-          'circle-stroke-color': ['case', ['==', ['get', 'inSelected'], 1], INK, ['match', ['get', 'state'], 'noise', NOISE_STROKE, MAP_BG]],
+          'circle-color': ['match', ['get', 'state'], 'noise', T.noiseFill, ['get', 'color']],
+          'circle-stroke-color': strokeExpr(T),
           'circle-stroke-width': ['case', ['==', ['get', 'inSelected'], 1], 2, ['match', ['get', 'state'], 'noise', 1.8, 1.4]],
         },
       });
@@ -264,7 +303,7 @@ export function MapView(props: Props) {
         type: 'circle',
         source: 'points',
         filter: ['==', ['get', 'selected'], 1],
-        paint: { 'circle-radius': 10, 'circle-color': 'rgba(0,0,0,0)', 'circle-stroke-color': INK, 'circle-stroke-width': 2 },
+        paint: { 'circle-radius': 10, 'circle-color': 'rgba(0,0,0,0)', 'circle-stroke-color': T.ink, 'circle-stroke-width': 2 },
       });
       loaded.current = true;
       render();
@@ -423,7 +462,7 @@ export function MapView(props: Props) {
     const pointFeatures: GeoJSON.Feature[] = resources.map((r) => {
       const g = computed?.groupOf.get(r.id);
       const state = !target.has(r.id) ? 'dim' : !clusters ? 'plain' : g ? 'member' : 'noise';
-      const color = state === 'member' && g ? PALETTE[g.color] : PLAIN_POINT;
+      const color = state === 'member' && g ? PALETTE[g.color] : THEMES[cb.current.theme].plainPoint;
       return {
         type: 'Feature',
         geometry: { type: 'Point', coordinates: [r.lon, r.lat] },
@@ -476,6 +515,15 @@ export function MapView(props: Props) {
     map.setLayoutProperty('eki', 'visibility', props.showEki ? 'visible' : 'none');
     for (const id of AIRPORT_LAYERS) map.setLayoutProperty(id, 'visibility', props.showAirports ? 'visible' : 'none');
   }, [props.showRoads, props.showEki, props.showAirports]);
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !loaded.current) return;
+    const t = THEMES[props.theme];
+    applyBaseTheme(map, t);
+    applyDataTheme(map, t);
+    render();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [props.theme]);
   // 再計算や選択解除に合わせて、残したポップアップを更新・閉じる
   useEffect(() => {
     const pinned = pinnedPopup.current;

@@ -72,4 +72,6 @@ export interface AppSettings {
   showRoads: boolean;
   showEki: boolean;
   showAirports: boolean;
+  /** 背景地図の昼・夜 */
+  theme: 'day' | 'night';
 }

@@ -3,10 +3,11 @@ import { PALETTE } from './lib/colors';
 import { blobRadiusKm, metersPerPixel } from './blob';
 import type { Computed } from './model';
 import type { Resource, ViewMode } from './types';
-import { INK, MAP_BG, NOISE_FILL, NOISE_STROKE, PLAIN_POINT } from './mapStyle';
+import { THEMES, type MapThemeName } from './mapStyle';
 
-const PAPER = '#121419'; // 画像の地 (パネルと同じ暗色)
-const SUB = '#a8a39a';
+const PAPER = '#ffffff'; // 画像の地 (ページと同じ白)
+const INK = '#1d2330';
+const SUB = '#5a6170';
 
 export interface ExportInfo {
   title: string;
@@ -19,6 +20,7 @@ export interface ExportInfo {
   showRoads: boolean;
   showEki: boolean;
   showAirports: boolean;
+  theme: MapThemeName;
 }
 
 const FONT = '"Hiragino Sans", "Noto Sans JP", "Yu Gothic", "Meiryo", sans-serif';
@@ -59,6 +61,11 @@ export async function exportPng(
   resources: Resource[],
   info: ExportInfo,
 ): Promise<{ blob: Blob; fallback: boolean; reason?: string }> {
+  const T = THEMES[info.theme];
+  const MAP_BG = T.bg;
+  const NOISE_FILL = T.noiseFill;
+  const NOISE_STROKE = T.noiseStroke;
+  const PLAIN_POINT = T.plainPoint;
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
   const cssW = map.getContainer().clientWidth;
   const cssH = map.getContainer().clientHeight;
@@ -148,7 +155,7 @@ export async function exportPng(
       if (info.view === 'points' || g) {
         ctx.fillStyle = info.view === 'points' || !g ? PLAIN_POINT : PALETTE[g.color];
         ctx.fill();
-        ctx.strokeStyle = MAP_BG;
+        ctx.strokeStyle = T.memberStroke;
         ctx.lineWidth = 1.4 * k;
       } else {
         ctx.fillStyle = NOISE_FILL;
@@ -168,7 +175,7 @@ export async function exportPng(
       const y = headH + (p.y - 16) * k;
       ctx.beginPath();
       ctx.arc(x, y, 11 * k, 0, Math.PI * 2);
-      ctx.fillStyle = '#16181e';
+      ctx.fillStyle = '#ffffff';
       ctx.fill();
       ctx.lineWidth = 2 * k;
       ctx.strokeStyle = PALETTE[g.color];
