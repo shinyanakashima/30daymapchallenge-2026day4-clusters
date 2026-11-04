@@ -11,6 +11,7 @@ export const TITLE_MAX = 40;
 export const DEFAULT_EPS: Record<Edition, number> = { '2014': 40, '2010': 25 };
 
 export const DEFAULTS: AppSettings = {
+  lang: 'en',
   edition: '2014',
   epsKm: 40,
   minPts: 3,
@@ -78,6 +79,7 @@ export function parseSettings(search: string, validKinds: ReadonlySet<string>, v
   const s: AppSettings = { ...DEFAULTS, cat: DEFAULTS.cat };
   if (q.get('v') !== SCHEMA_VERSION) return s;
   s.edition = parseEdition(search);
+  s.lang = q.get('lang') === 'ja' ? 'ja' : 'en';
   s.epsKm = intIn(q.get('d'), EPS_MIN, EPS_MAX) ?? DEFAULT_EPS[s.edition];
   s.minPts = intIn(q.get('m'), MINPTS_MIN, MINPTS_MAX) ?? DEFAULTS.minPts;
   s.cat = parseCategory(q.get('c'), validKinds) ?? DEFAULTS.cat;
@@ -102,6 +104,7 @@ export function serializeSettings(s: AppSettings): string {
   const q = new URLSearchParams();
   q.set('v', SCHEMA_VERSION);
   if (s.edition !== '2014') q.set('ed', s.edition);
+  if (s.lang === 'ja') q.set('lang', 'ja');
   q.set('d', String(s.epsKm));
   q.set('m', String(s.minPts));
   q.set('c', serializeCategory(s.cat));

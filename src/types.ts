@@ -63,6 +63,8 @@ export interface MapPos {
 export type Edition = '2014' | '2010';
 
 export interface AppSettings {
+  /** 画面の言語 */
+  lang: 'en' | 'ja';
   /** 観光資源データの版 */
   edition: Edition;
   epsKm: number;

@@ -2,6 +2,7 @@ import { useEffect, useState, type ReactNode } from 'react';
 import type { LoadedData } from '../data';
 import { MAX_FILE_BYTES, MAX_USER_POINTS, parseImportedGeojson, type ImportedSet } from '../importGeojson';
 import { TITLE_MAX } from '../urlState';
+import { useI18n } from '../i18n';
 
 export function NumberField(props: {
   id: string;
@@ -44,7 +45,7 @@ export function NumberField(props: {
             min={min}
             max={max}
             value={draft}
-            aria-label={`${label}（数値）`}
+            aria-label={label}
             onChange={(e) => setDraft(e.target.value)}
             onBlur={(e) => commit(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && commit((e.target as HTMLInputElement).value)}
@@ -58,17 +59,18 @@ export function NumberField(props: {
 }
 
 export function ImportBox({ imported, onImport }: { imported: ImportedSet | null; onImport: (s: ImportedSet | null) => void }) {
+  const { t, lang } = useI18n();
   const [error, setError] = useState<string | null>(null);
   const [over, setOver] = useState(false);
   const read = async (file: File | undefined) => {
     if (!file) return;
     setError(null);
     if (file.size > MAX_FILE_BYTES) {
-      setError(`ファイルが大きすぎます（${Math.round(MAX_FILE_BYTES / 1024 / 1024)}MB まで）`);
+      setError(t.importTooLarge(Math.round(MAX_FILE_BYTES / 1024 / 1024)));
       return;
     }
     try {
-      onImport(parseImportedGeojson(await file.text(), file.name));
+      onImport(parseImportedGeojson(await file.text(), file.name, lang));
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     }
@@ -78,13 +80,13 @@ export function ImportBox({ imported, onImport }: { imported: ImportedSet | null
       {imported && (
         <div>
           <p className="import-info">
-            <b>{imported.fileName}</b>：{imported.resources.length} 地点
-            {imported.skipped.length > 0 && `（除外：${imported.skipped.map((x) => `${x.reason} ${x.count}`).join('、')}）`}
-            {imported.truncated > 0 && `（上限 ${MAX_USER_POINTS} 地点を超えた ${imported.truncated} 地点は読み込んでいません）`}
-            {imported.outsideHokkaido > 0 && `。うち ${imported.outsideHokkaido} 地点は北海道の外です`}
+            {t.importInfo(imported.fileName, imported.resources.length)}
+            {imported.skipped.length > 0 && t.importSkipped(imported.skipped.map((x) => `${x.reason} ${x.count}`).join(t.listSep))}
+            {imported.truncated > 0 && t.importTruncated(MAX_USER_POINTS, imported.truncated)}
+            {imported.outsideHokkaido > 0 && t.importOutside(imported.outsideHokkaido)}
           </p>
           <button type="button" className="link-button" onClick={() => onImport(null)}>
-            追加データを取り消す
+            {t.importRemove}
           </button>
         </div>
       )}
@@ -109,7 +111,7 @@ export function ImportBox({ imported, onImport }: { imported: ImportedSet | null
             e.target.value = '';
           }}
         />
-        {imported ? '別の GeoJSON に差し替える' : 'GeoJSON（点）を選ぶ、またはここにドロップ'}
+        {imported ? t.importReplace : t.importChoose}
       </label>
       {error && (
         <p className="import-error" role="alert">
@@ -117,20 +119,21 @@ export function ImportBox({ imported, onImport }: { imported: ImportedSet | null
         </p>
       )}
       <p className="field-hint">
-        ファイルは送信されず、このブラウザの中だけで使います。名称は name／名称、種別は kind／category／種別 の項目から読み取ります。テーマ「すべて」で元データと合わせて、「追加データ」で追加分だけでまとめます。
+        {t.importHint}
       </p>
     </div>
   );
 }
 
 export function ExportBox({ initial, onSave }: { initial: string; onSave: (t: string) => Promise<string | null>; onClose?: () => void }) {
+  const { t } = useI18n();
   const [title, setTitle] = useState(initial);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   return (
-    <div role="group" aria-label="画像（PNG）を保存">
+    <div role="group" aria-label={t.menuExport}>
       <label className="field-label" htmlFor="feature-title">
-        特集タイトル（任意・{TITLE_MAX}字まで）
+        {t.exportTitleLabel(TITLE_MAX)}
       </label>
       <input
         id="feature-title"
@@ -138,10 +141,10 @@ export function ExportBox({ initial, onSave }: { initial: string; onSave: (t: st
         type="text"
         maxLength={TITLE_MAX}
         value={title}
-        placeholder="例：道東の湖をめぐるなら"
+        placeholder={t.exportPlaceholder}
         onChange={(e) => setTitle(e.target.value)}
       />
-      <p className="field-hint">地図・凡例・出典・基準年が画像に入ります。タイトルは共有URLにも残ります。</p>
+      <p className="field-hint">{t.exportHint}</p>
       <div className="guide-nav">
         <button
           type="button"
@@ -152,15 +155,15 @@ export function ExportBox({ initial, onSave }: { initial: string; onSave: (t: st
             setMsg(null);
             try {
               const m = await onSave(title);
-              setMsg(m ?? '保存しました。');
+              setMsg(m ?? t.exportSaved);
             } catch (e) {
-              setMsg(`保存できませんでした：${e instanceof Error ? e.message : String(e)}`);
+              setMsg(t.exportFailed(e instanceof Error ? e.message : String(e)));
             } finally {
               setBusy(false);
             }
           }}
         >
-          {busy ? '作成中…' : 'PNGを保存'}
+          {busy ? t.exportSaving : t.exportSave}
         </button>
       </div>
       {msg && (
@@ -173,6 +176,11 @@ export function ExportBox({ initial, onSave }: { initial: string; onSave: (t: st
 }
 
 export function About({ data }: { data: LoadedData }) {
+  const { lang } = useI18n();
+  return lang === 'en' ? <AboutEn data={data} /> : <AboutJa data={data} />;
+}
+
+function AboutJa({ data }: { data: LoadedData }) {
   const s = data.manifest.source;
   return (
     <footer className="about">
@@ -237,6 +245,90 @@ export function About({ data }: { data: LoadedData }) {
           <li>道の駅は2018年時点の登録を重ねた参考情報で、まとまりの計算には含めていません。道路は地理院ベクトルタイルの道路中心線（高速・国道・道道など）です。</li>
           <li>色は前回のまとまりとの重なりで引き継いでいますが、識別の補助で、まとまりの同一性を保証するものではありません。</li>
           <li>テーマの「自然資源・人文資源」は観光資源台帳の区分に合わせた対応表です（元データの分類コードは北海道分が未設定のため）。</li>
+        </ul>
+      </details>
+    </footer>
+  );
+}
+
+function AboutEn({ data }: { data: LoadedData }) {
+  const s = data.manifest.source;
+  const is2010 = data.manifest.edition === '2010';
+  return (
+    <footer className="about" lang="en">
+      <p>
+        Hokkaido faces an uneven distribution of visitors and limited secondary transport for touring between sites. This map groups tourism resources by distance
+        ({is2010 ? '2010 edition, for comparison' : '2014 edition'}) to look for “places to visit together” across municipal borders. Clusters are based only on
+        straight-line distances between representative points; they do not show actual transport access or travel patterns.
+      </p>
+      <p className="credit">
+        Data:{' '}
+        <a href={s.pageUrl} target="_blank" rel="noopener">
+          National Land Numerical Information, Tourism Resources {is2010 ? 'ver. 2.0' : 'ver. 2.2'}
+        </a>{' '}
+        (MLIT Japan, {is2010 ? 'compiled in FY2010' : 'as of 30 Sep 2014'}, {data.manifest.stats.validPoints} spots in Hokkaido). Terms:{' '}
+        <a href={s.licenseUrl} target="_blank" rel="noopener">
+          non-commercial use
+        </a>
+        . Roadside stations:{' '}
+        <a href="https://nlftp.mlit.go.jp/ksj/gml/datalist/KsjTmplt-P35.html" target="_blank" rel="noopener">
+          NLNI Roadside Stations
+        </a>{' '}
+        (MLIT, 2018, non-commercial). Airports:{' '}
+        <a href="https://nlftp.mlit.go.jp/ksj/gml/datalist/KsjTmplt-C28-2021.html" target="_blank" rel="noopener">
+          NLNI Airports
+        </a>{' '}
+        (MLIT, 2021). Railways:{' '}
+        <a href="https://nlftp.mlit.go.jp/ksj/gml/datalist/KsjTmplt-N05-2025.html" target="_blank" rel="noopener">
+          NLNI Railway Time Series
+        </a>{' '}
+        (MLIT, FY2025 edition, non-commercial; processed in{' '}
+        <a href="https://github.com/shinyanakashima/30daymapchallenge-2026day1-station-history" target="_blank" rel="noopener">
+          the Day 1 map
+        </a>
+        ). Satellite imagery:{' '}
+        <a href="https://s2maps.eu" target="_blank" rel="noopener">
+          Sentinel-2 cloudless - https://s2maps.eu by EOX IT Services GmbH (Contains modified Copernicus Sentinel data 2016)
+        </a>
+        ,{' '}
+        <a href="https://maps.gsi.go.jp/development/ichiran.html" target="_blank" rel="noopener">
+          GSI Tiles (seamless photo)
+        </a>
+        . Coastlines, roads and place names:{' '}
+        <a href="https://maps.gsi.go.jp/development/vt.html" target="_blank" rel="noopener">
+          GSI Vector Tiles
+        </a>
+        . Night terrain:{' '}
+        <a href="https://github.com/tilezen/joerd/blob/master/docs/attribution.md" target="_blank" rel="noopener">
+          Terrain Tiles (Mapzen and others)
+        </a>
+        .
+      </p>
+      <details>
+        <summary>About the data and the method</summary>
+        <ul className="notes">
+          <li>
+            The data comes from the Tourism Resource Register (Japan Travel Bureau Foundation), mainly grade A and above. It is not a list of every tourist spot in
+            Hokkaido and does not show current opening status. Place names are kept in Japanese as in the source data.
+          </li>
+          <li>Points are representative locations such as the centre of a resource, not entrances. Line and area features are not used, to avoid counting the same resource twice.</li>
+          <li>
+            Clusters are found with DBSCAN (density-based clustering). A spot becomes a core when at least “spots per cluster” spots (including itself) lie within the
+            distance that counts as near; spots within that distance of a core join its cluster. Distances are great-circle distances (Haversine formula).
+          </li>
+          <li>Spots in a chain can form a cluster longer than the set distance. The distance is neither a diameter nor a travel time.</li>
+          <li>
+            Zooming does not change the clusters. The colored glow is drawn after clustering, as half the set distance around each member spot, so glows touch
+            roughly when spots are within the set distance. A glow may cover sea or mountains; it does not mean the whole area can be visited.
+          </li>
+          <li>
+            Railways are from the NLNI Railway Time Series (FY2025, non-commercial), processed in the Day 1 map “Where the Stations Were”. They show lines and stations
+            in service at the end of 2025; “Closed railway lines” adds sections in service since 1950 as dashed lines. Stations appear when you zoom in.
+          </li>
+          <li>Airports are reference points from NLNI Airports (2021). Airports in service glow; suspended ones are hollow. They are not used in the clustering.</li>
+          <li>Roadside stations are registrations as of 2018, shown for reference only. Roads are GSI road centre lines (expressways, national and prefectural roads).</li>
+          <li>Colors carry over from the previous result by member overlap. They help tell clusters apart but do not guarantee that a cluster is “the same”.</li>
+          <li>The Nature / Culture themes follow the categories of the Tourism Resource Register (the source’s own category codes are not set for Hokkaido).</li>
         </ul>
       </details>
     </footer>

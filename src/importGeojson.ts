@@ -44,12 +44,13 @@ const inHokkaido = (lon: number, lat: number) => lon >= 139 && lon <= 149 && lat
  * GeoJSON テキストを観光資源として読み込む。点 (Point / MultiPoint) だけを使い、
  * 線・面は代表点に変換しない (元データと同じ方針)。
  */
-export function parseImportedGeojson(text: string, fileName: string): ImportedSet {
+export function parseImportedGeojson(text: string, fileName: string, lang: 'en' | 'ja' = 'ja'): ImportedSet {
+  const en = lang === 'en';
   let json: unknown;
   try {
     json = JSON.parse(text);
   } catch {
-    throw new Error('JSON として読めませんでした');
+    throw new Error(en ? 'Could not read the file as JSON' : 'JSON として読めませんでした');
   }
   const root = json as { type?: string; features?: unknown[]; geometry?: unknown };
   const features: unknown[] =
@@ -58,7 +59,7 @@ export function parseImportedGeojson(text: string, fileName: string): ImportedSe
       : root?.type === 'Feature'
         ? [root]
         : [];
-  if (features.length === 0) throw new Error('GeoJSON の Feature が見つかりませんでした');
+  if (features.length === 0) throw new Error(en ? 'No GeoJSON features found' : 'GeoJSON の Feature が見つかりませんでした');
 
   const skipped = new Map<string, number>();
   const skip = (reason: string, n = 1) => skipped.set(reason, (skipped.get(reason) ?? 0) + n);
@@ -75,12 +76,12 @@ export function parseImportedGeojson(text: string, fileName: string): ImportedSe
     if (g?.type === 'Point') coords = [g.coordinates];
     else if (g?.type === 'MultiPoint' && Array.isArray(g.coordinates)) coords = g.coordinates;
     else {
-      skip(g?.type ? `点以外の形状（${g.type}）` : '形状なし');
+      skip(g?.type ? (en ? `non-point geometry (${g.type})` : `点以外の形状（${g.type}）`) : en ? 'no geometry' : '形状なし');
       continue;
     }
     for (const c of coords) {
       if (!validLonLat(c)) {
-        skip('座標が不正');
+        skip(en ? 'invalid coordinates' : '座標が不正');
         continue;
       }
       if (resources.length >= MAX_USER_POINTS) {
@@ -93,7 +94,7 @@ export function parseImportedGeojson(text: string, fileName: string): ImportedSe
       const n = resources.length + 1;
       resources.push({
         id: USER_ID_BASE + n,
-        name: pick(props, NAME_KEYS) ?? `追加地点 ${n}`,
+        name: pick(props, NAME_KEYS) ?? (en ? `Added spot ${n}` : `追加地点 ${n}`),
         kind,
         kindKey: kindKeys.get(kind)!,
         group: 'user',
@@ -104,7 +105,7 @@ export function parseImportedGeojson(text: string, fileName: string): ImportedSe
       });
     }
   }
-  if (resources.length === 0) throw new Error('使える点がありませんでした（点の Feature が必要です）');
+  if (resources.length === 0) throw new Error(en ? 'No usable points (point features are required)' : '使える点がありませんでした（点の Feature が必要です）');
   return {
     fileName: fileName.slice(0, 80),
     importedAt: new Date().toISOString(),

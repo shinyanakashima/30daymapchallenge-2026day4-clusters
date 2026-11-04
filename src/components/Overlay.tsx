@@ -8,6 +8,7 @@ import { EPS_MAX, EPS_MIN, MINPTS_MAX, MINPTS_MIN } from '../urlState';
 import { GUIDE_STEPS, GuideCard, type GuideAnchor } from './Guide';
 import { About, ExportBox, ImportBox, NumberField } from './parts';
 import { GroupCard, PointCard } from './SelectionCard';
+import { kindName, useI18n } from '../i18n';
 
 interface Props {
   data: LoadedData;
@@ -43,6 +44,7 @@ type Pop = 'groups' | 'minpts' | 'theme' | 'more' | 'import' | 'export' | 'about
 /** 地図の上に重ねる UI。普段は小さな札と下の操作バーだけを見せ、詳細は開いたときだけ出す。 */
 export function Overlay(p: Props) {
   const { data, byId, settings, update, computed } = p;
+  const { lang, t } = useI18n();
   const [pop, setPop] = useState<Pop | null>(null);
   const toggle = (k: Pop) => {
     setPop((cur) => (cur === k ? null : k));
@@ -118,10 +120,10 @@ export function Overlay(p: Props) {
   let card: ReactNode = null;
   if (p.candidates) {
     card = (
-      <section className="card candidates" aria-label="同じ場所にある地点">
+      <section className="card candidates" aria-label={t.candidatesLabel}>
         <div className="card-head">
-          <p className="card-title small">この場所には {p.candidates.length} 地点あります</p>
-          <button type="button" className="icon-button" onClick={p.onCloseCandidates} aria-label="閉じる">
+          <p className="card-title small">{t.candidates(p.candidates.length)}</p>
+          <button type="button" className="icon-button" onClick={p.onCloseCandidates} aria-label={t.close}>
             ×
           </button>
         </div>
@@ -130,7 +132,7 @@ export function Overlay(p: Props) {
             <li key={id}>
               <button type="button" className="name-button" onClick={() => p.onSelect(id, true)}>
                 {byId.get(id)!.name}
-                <span className="name-kind">{byId.get(id)!.kind}</span>
+                <span className="name-kind">{kindName(byId.get(id)!.kind, lang)}</span>
               </button>
             </li>
           ))}
@@ -143,7 +145,7 @@ export function Overlay(p: Props) {
         <>
           {p.focusPoint && (
             <p className="picked">
-              選んだ地点：<b>{sel.name}</b>（{sel.kind}）
+              {t.pickedSpot}<b>{sel.name}</b>{lang === 'en' ? ` (${kindName(sel.kind, lang)})` : `（${kindName(sel.kind, lang)}）`}
             </p>
           )}
           <GroupCard
@@ -163,15 +165,15 @@ export function Overlay(p: Props) {
         <section className="card">
           <div className="card-head">
             <h2 className="card-title">{sel.name}</h2>
-            <button type="button" className="icon-button" onClick={() => p.onSelect(null)} aria-label="選択を閉じる">
+            <button type="button" className="icon-button" onClick={() => p.onSelect(null)} aria-label={t.closeSelection}>
               ×
             </button>
           </div>
           <p className="muted">
-            {sel.kind}
-            {sel.address && `／${sel.address}`}
+            {kindName(sel.kind, lang)}
+            {sel.address && `${lang === 'en' ? ' / ' : '／'}${sel.address}`}
           </p>
-          <p className="hint">「まとまり」に切り替えると、この地点がどのまとまりに入るかが分かります。</p>
+          <p className="hint">{t.pointsHint}</p>
         </section>
       );
     }
@@ -188,18 +190,18 @@ export function Overlay(p: Props) {
     setCat({ type: 'kinds', keys: [...cur].sort() });
   };
   const themeOptions: [string, string][] = [
-    ['all', 'すべて'],
-    ['nature', '自然資源'],
-    ['culture', '人文資源'],
-    ...(p.imported ? ([['user', '追加データ']] as [string, string][]) : []),
-    ['kinds', '種別で選ぶ'],
+    ['all', t.themeAll],
+    ['nature', t.themeNature],
+    ['culture', t.themeCulture],
+    ...(p.imported ? ([['user', t.themeUser]] as [string, string][]) : []),
+    ['kinds', t.themeKinds],
   ];
 
   const statsText = computed
     ? clusters
-      ? [`${computed.targetIds.length} 地点`, `まとまり ${computed.groups.length}`, `孤立 ${computed.noise.length}`]
-      : [`${computed.targetIds.length} 地点`, '点だけ表示']
-    : ['計算中…'];
+      ? [t.statSpots(computed.targetIds.length), t.statClusters(computed.groups.length), t.statIsolated(computed.noise.length)]
+      : [t.statSpots(computed.targetIds.length), t.statPointsOnly]
+    : [t.calculating];
 
   return (
     <div className="overlay" ref={rootRef}>
@@ -210,30 +212,44 @@ export function Overlay(p: Props) {
           <h1 className="title">Shabon Hokkaido</h1>
           <p className="subtitle">
             <span className="tagline">How Near Is Near?</span>
-            {!p.isMobile && <>｜{'北海道の観光地を、距離でまとめる地図'}</>}
+            {!p.isMobile && <>{lang === 'en' ? ' | ' : '｜'}{t.subtitle}</>}
           </p>
-          {settings.title && <p className="feature-title">特集：{settings.title}</p>}
+          {settings.title && <p className="feature-title">{t.feature}{settings.title}</p>}
         </div>
-        <button type="button" className="round-button" onClick={p.openGuide} aria-label="操作ガイドを開く" title="操作ガイド">
-          ?
-        </button>
+        <div className="title-actions">
+          <div className="lang-switch" role="radiogroup" aria-label="Language / 言語">
+            {(
+              [
+                ['en', 'EN'],
+                ['ja', '日本語'],
+              ] as const
+            ).map(([key, label]) => (
+              <button key={key} type="button" role="radio" aria-checked={lang === key} lang={key} onClick={() => update({ lang: key })}>
+                {label}
+              </button>
+            ))}
+          </div>
+          <button type="button" className="round-button" onClick={p.openGuide} aria-label={t.openGuide} title={t.guideTitle}>
+            ?
+          </button>
+        </div>
       </header>
 
       {/* 左: 重ねる情報 (最初から開いておき、見出しで畳める) */}
-      <section className={'float layer-panel' + (layersOpen ? ' is-open' : '')} aria-label="重ねる情報">
+      <section className={'float layer-panel' + (layersOpen ? ' is-open' : '')} aria-label={t.overlays}>
         <button type="button" className="layer-head" onClick={() => setLayers(!layersOpen)} aria-expanded={layersOpen}>
-          <span>重ねる情報</span>
+          <span>{t.overlays}</span>
           <i className="caret" aria-hidden="true" />
         </button>
         {layersOpen && (
       <div className="layer-list">
         {(
           [
-            ['showRail', 'lg-rail', '鉄道（2025年末）'],
-            ['showRailHistory', 'lg-rail-history', '廃止された路線'],
-            ['showAirports', 'lg-airport', '空港'],
-            ['showEki', 'lg-eki', '道の駅'],
-            ['showRoads', 'lg-road', '道路'],
+            ['showRail', 'lg-rail', t.layerRail],
+            ['showRailHistory', 'lg-rail-history', t.layerRailHistory],
+            ['showAirports', 'lg-airport', t.layerAirports],
+            ['showEki', 'lg-eki', t.layerEki],
+            ['showRoads', 'lg-road', t.layerRoads],
           ] as const
         ).map(([key, icon, label]) => (
           <label key={key} className="layer-row">
@@ -243,12 +259,12 @@ export function Overlay(p: Props) {
           </label>
         ))}
         <div className="layer-row layer-theme">
-          <span>背景</span>
-          <div className="seg seg-small" role="radiogroup" aria-label="背景地図">
+          <span>{t.baseMap}</span>
+          <div className="seg seg-small" role="radiogroup" aria-label={t.baseMap}>
             {(
               [
-                ['day', '衛星写真'],
-                ['night', '夜の地形'],
+                ['day', t.satellite],
+                ['night', t.nightTerrain],
               ] as const
             ).map(([key, label]) => (
               <button key={key} type="button" role="radio" aria-checked={settings.theme === key} onClick={() => update({ theme: key })}>
@@ -257,7 +273,7 @@ export function Overlay(p: Props) {
             ))}
           </div>
         </div>
-        <p className="field-hint">重ねた情報は参考で、まとまりの計算には含めません。</p>
+        <p className="field-hint">{t.overlayNote}</p>
       </div>
         )}
       </section>
@@ -281,7 +297,7 @@ export function Overlay(p: Props) {
           <div className="float popover groups-pop">
             <Legend clusters={clusters} />
             {clusters && computed && computed.groups.length > 0 && (
-              <ul className="group-list" aria-label="まとまりの一覧">
+              <ul className="group-list" aria-label={t.clusterList}>
                 {computed.groups.map((g) => (
                   <li key={g.key}>
                     <button
@@ -299,9 +315,9 @@ export function Overlay(p: Props) {
               </ul>
             )}
             {clusters && computed && computed.groups.length === 0 && computed.targetIds.length > 0 && (
-              <p className="muted">この条件では、まとまりはできません。すべて孤立点です。距離を広げるか、地点数を減らしてみてください。</p>
+              <p className="muted">{t.noClusters}</p>
             )}
-            {computed && computed.targetIds.length === 0 && <p className="muted">このテーマに当てはまる地点はありません。</p>}
+            {computed && computed.targetIds.length === 0 && <p className="muted">{t.noSpots}</p>}
           </div>
         )}
         {!pop && card && <div className="float-card">{card}</div>}
@@ -316,26 +332,26 @@ export function Overlay(p: Props) {
             style={popLeft !== null ? { left: popLeft } : undefined}
           >
             <div className="pop-head">
-              <p className="pop-title">{POP_TITLES[pop]}</p>
-              <button type="button" className="icon-button" onClick={() => setPop(null)} aria-label="閉じる">
+              <p className="pop-title">{t.popTitles[pop]}</p>
+              <button type="button" className="icon-button" onClick={() => setPop(null)} aria-label={t.close}>
                 ×
               </button>
             </div>
             {pop === 'minpts' && (
               <NumberField
                 id="minpts"
-                label="何地点から集まりと呼ぶ？"
+                label={t.minPtsLabel}
                 value={settings.minPts}
                 min={MINPTS_MIN}
                 max={MINPTS_MAX}
-                unit="地点"
+                unit={t.minPtsUnit}
                 onChange={(v) => update({ minPts: v })}
-                hint={<p className="field-hint">その地点自身も数に含めます。</p>}
+                hint={<p className="field-hint">{t.minPtsHint}</p>}
               />
             )}
             {pop === 'theme' && (
               <div>
-                <div className="seg" role="radiogroup" aria-label="テーマ">
+                <div className="seg" role="radiogroup" aria-label={t.theme}>
                   {themeOptions.map(([key, label]) => (
                     <button
                       key={key}
@@ -372,7 +388,7 @@ export function Overlay(p: Props) {
                             .map((k) => (
                               <label key={k.key} className="check">
                                 <input type="checkbox" checked={kindKeys.includes(k.key)} onChange={() => toggleKind(k.key)} />
-                                {k.name}
+                                {kindName(k.name, lang)}
                                 <span className="muted"> {k.count}</span>
                               </label>
                             ))}
@@ -380,10 +396,10 @@ export function Overlay(p: Props) {
                       ))}
                     <div className="kind-actions">
                       <button type="button" className="link-button" onClick={() => setCat({ type: 'kinds', keys: data.categories.kinds.map((k) => k.key) })}>
-                        すべて選ぶ
+                        {t.selectAll}
                       </button>
                       <button type="button" className="link-button" onClick={() => setCat({ type: 'kinds', keys: [] })}>
-                        すべて外す
+                        {t.clearAll}
                       </button>
                     </div>
                   </div>
@@ -393,12 +409,12 @@ export function Overlay(p: Props) {
             {pop === 'more' && (
               <div className="menu">
                 <div className="menu-block">
-                  <p className="field-label">観光資源データの版</p>
-                  <div className="seg" role="radiogroup" aria-label="観光資源データの版">
+                  <p className="field-label">{t.editionLabel}</p>
+                  <div className="seg" role="radiogroup" aria-label={t.editionLabel}>
                     {(
                       [
-                        ['2014', '2014年版'],
-                        ['2010', '2010年版（比較用）'],
+                        ['2014', t.edition2014],
+                        ['2010', t.edition2010],
                       ] as const
                     ).map(([key, label]) => (
                       <button key={key} type="button" role="radio" aria-checked={settings.edition === key} onClick={() => p.onEdition(key)}>
@@ -408,12 +424,12 @@ export function Overlay(p: Props) {
                   </div>
                   <p className="field-hint">
                     {settings.edition === '2014'
-                      ? '国土数値情報 第2.2版（基準日 2014年9月30日）。北海道は35地点です。'
-                      : '第2.0版（2010年度作成）。北海道は141地点で、自然資源が中心です。収録の基準が違うため、件数はそのまま比べられません。'}
+                      ? t.edition2014Hint
+                      : t.edition2010Hint}
                   </p>
                 </div>
                 <button type="button" className="menu-item" onClick={() => setPop('import')}>
-                  地点を追加する（GeoJSON）
+                  {t.menuImport}
                 </button>
                 <button
                   type="button"
@@ -423,20 +439,20 @@ export function Overlay(p: Props) {
                     p.onShare();
                   }}
                 >
-                  設定のURLをコピー
+                  {t.menuShare}
                 </button>
                 <button type="button" className="menu-item" onClick={() => setPop('export')}>
-                  画像（PNG）を保存
+                  {t.menuExport}
                 </button>
                 <button type="button" className="menu-item" onClick={() => setPop('about')}>
-                  この地図とデータについて
+                  {t.menuAbout}
                 </button>
                 <button
                   type="button"
                   className="menu-item quiet"
                   onClick={() => update({ epsKm: p.defaults.epsKm, minPts: p.defaults.minPts, cat: p.defaults.cat })}
                 >
-                  距離・地点数・テーマを初期設定に戻す
+                  {t.menuReset}
                 </button>
               </div>
             )}
@@ -446,13 +462,13 @@ export function Overlay(p: Props) {
           </div>
         )}
 
-        <div className="float control-bar" role="toolbar" aria-label="地図の操作">
-          <div className="view-toggle" role="group" aria-label="表示の比較">
+        <div className="float control-bar" role="toolbar" aria-label={t.toolbar}>
+          <div className="view-toggle" role="group" aria-label={t.compare}>
             <button type="button" aria-pressed={clusters} onClick={() => update({ view: 'clusters' })}>
-              まとまり
+              {t.viewClusters}
             </button>
             <button type="button" aria-pressed={!clusters} onClick={() => update({ view: 'points' })}>
-              点だけ
+              {t.viewPoints}
             </button>
           </div>
           <span className="bar-sep" aria-hidden="true" />
@@ -460,7 +476,7 @@ export function Overlay(p: Props) {
             <DistanceControl value={settings.epsKm} onChange={(v) => update({ epsKm: v })} compact={p.isMobile} bubbleLayer={bubbleRef} />
           </div>
           <button type="button" ref={setButton('minpts')} className={'bar-button' + (pop === 'minpts' ? ' is-open' : '')} onClick={() => toggle('minpts')} aria-expanded={pop === 'minpts'}>
-            {settings.minPts}地点〜
+            {t.minPtsButton(settings.minPts)}
           </button>
           <span className="bar-sep" aria-hidden="true" />
           <button
@@ -470,11 +486,11 @@ export function Overlay(p: Props) {
             onClick={() => toggle('theme')}
             aria-expanded={pop === 'theme'}
           >
-            <span className="bar-label">テーマ</span>
+            <span className="bar-label">{t.theme}</span>
             {p.categoryLabel}
           </button>
           <button type="button" ref={setButton('layers')} className={'bar-button' + (layersOpen ? ' is-open' : '')} onClick={() => setLayers(!layersOpen)} aria-expanded={layersOpen}>
-            レイヤ
+            {t.layers}
           </button>
           <button
             type="button"
@@ -482,7 +498,7 @@ export function Overlay(p: Props) {
             className={'bar-button bar-more' + (pop && ['more', 'import', 'export', 'about'].includes(pop) ? ' is-open' : '')}
             onClick={() => toggle('more')}
             aria-expanded={pop === 'more'}
-            aria-label="その他のメニュー"
+            aria-label={t.more}
           >
             …
           </button>
@@ -498,34 +514,26 @@ export function Overlay(p: Props) {
   );
 }
 
-const POP_TITLES: Record<Pop, string> = {
-  groups: 'まとまり',
-  minpts: '何地点から集まり？',
-  theme: 'テーマ',
-  more: 'その他',
-  import: '地点を追加する',
-  export: '画像（PNG）を保存',
-  about: 'この地図とデータについて',
-};
 
 function Legend({ clusters }: { clusters: boolean }) {
+  const { t } = useI18n();
   return (
-    <div className="legend" aria-label="凡例">
+    <div className="legend" aria-label={t.legend}>
       {clusters ? (
         <>
           <span>
             <i className="lg-blob" />
-            まとまり（色のにじみ）
+            {t.legendClusters}
           </span>
           <span>
             <i className="lg-noise" />
-            孤立点
+            {t.legendIsolated}
           </span>
         </>
       ) : (
         <span>
           <i className="lg-dot lg-plain" />
-          観光資源
+          {t.legendPoints}
         </span>
       )}
     </div>
@@ -593,6 +601,7 @@ function spawnBubbles(layer: HTMLElement | null, from: HTMLElement | null, ratio
 
 /** 操作バーに直接置く距離スライダー。数値は大きく出し、押すと数値入力に切り替わる */
 function DistanceControl({ value, onChange, compact, bubbleLayer }: { value: number; onChange: (v: number) => void; compact: boolean; bubbleLayer: React.RefObject<HTMLDivElement | null> }) {
+  const { t } = useI18n();
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(String(value));
   useEffect(() => setDraft(String(value)), [value]);
@@ -621,7 +630,8 @@ function DistanceControl({ value, onChange, compact, bubbleLayer }: { value: num
     <>
       <div className="dist-main">
         <label htmlFor="eps" className="dist-label">
-          近所とみなす距離{compact ? '' : '（スライダーで変えると、まとまりが組み変わります）'}
+          {t.distanceLabel}
+          {!compact && <span className="dist-label-sub">{t.distanceLabelLong}</span>}
         </label>
         <input
           id="eps"
@@ -646,7 +656,7 @@ function DistanceControl({ value, onChange, compact, bubbleLayer }: { value: num
             max={EPS_MAX}
             value={draft}
             autoFocus
-            aria-label="近所とみなす距離（km）"
+            aria-label={t.distanceInput}
             onChange={(e) => setDraft(e.target.value)}
             onBlur={(e) => commit(e.target.value)}
             onKeyDown={(e) => {
@@ -662,8 +672,8 @@ function DistanceControl({ value, onChange, compact, bubbleLayer }: { value: num
             type="button"
             className={'dist-number' + (bump ? ` is-${bump}` : '')}
             onClick={() => setEditing(true)}
-            aria-label={`近所とみなす距離 ${value}km。押すと数値で入力できます`}
-            title="押すと数値で入力"
+            aria-label={t.distanceButton(value)}
+            title={t.distanceTitle}
           >
             {shown}
           </button>

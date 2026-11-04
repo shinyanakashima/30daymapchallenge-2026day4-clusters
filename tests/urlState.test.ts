@@ -9,6 +9,7 @@ describe('urlState', () => {
   it('往復しても同じ設定になる', () => {
     const s: AppSettings = {
       edition: '2010',
+      lang: 'ja',
       epsKm: 62,
       minPts: 4,
       cat: { type: 'kinds', keys: ['k01', 'k03'] },

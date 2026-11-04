@@ -52,8 +52,8 @@ export const THEMES: Record<MapThemeName, MapTheme> = {
     coast: '#ffffff',
     coastOpacity: 0,
     coastGlowOpacity: 0,
-    roads: { motorway: '#ffd79a', national: '#ffffff', other: '#ffffff' },
-    roadOpacity: { core: [0.22, 0.42], glow: [0, 0.08] },
+    roads: { motorway: '#ffd27a', national: '#fff1cf', other: '#e8f3ff' },
+    roadOpacity: { core: [0.5, 0.85], glow: [0.18, 0.4] },
     label: '#ffffff',
     labelHalo: 'rgba(10, 20, 30, 0.75)',
     ink: '#ffffff',
@@ -116,12 +116,12 @@ export const THEMES: Record<MapThemeName, MapTheme> = {
 export const S2_ATTRIBUTION =
   '<a href="https://s2maps.eu" target="_blank" rel="noopener">Sentinel-2 cloudless - https://s2maps.eu by EOX IT Services GmbH (Contains modified Copernicus Sentinel data 2016)</a>';
 export const PHOTO_ATTRIBUTION =
-  '<a href="https://maps.gsi.go.jp/development/ichiran.html#seamlessphoto" target="_blank" rel="noopener">地理院タイル（全国最新写真（シームレス））</a>';
-export const TILE_ATTRIBUTION = '<a href="https://maps.gsi.go.jp/development/vt.html" target="_blank" rel="noopener">地理院ベクトルタイル</a>';
+  '<a href="https://maps.gsi.go.jp/development/ichiran.html#seamlessphoto" target="_blank" rel="noopener">GSI Tiles (seamless photo)</a>';
+export const TILE_ATTRIBUTION = '<a href="https://maps.gsi.go.jp/development/vt.html" target="_blank" rel="noopener">GSI Vector Tiles</a>';
 export const DEM_ATTRIBUTION =
-  '地形 <a href="https://github.com/tilezen/joerd/blob/master/docs/attribution.md" target="_blank" rel="noopener">Terrain Tiles (Mapzen ほか)</a>';
+  'Terrain: <a href="https://github.com/tilezen/joerd/blob/master/docs/attribution.md" target="_blank" rel="noopener">Terrain Tiles (Mapzen and others)</a>';
 export const DATA_ATTRIBUTION =
-  '<a href="https://nlftp.mlit.go.jp/ksj/gml/datalist/KsjTmplt-P12-v2_2.html" target="_blank" rel="noopener">国土数値情報（観光資源・道の駅・空港・鉄道時系列）国土交通省</a>';
+  '<a href="https://nlftp.mlit.go.jp/ksj/gml/datalist/KsjTmplt-P12-v2_2.html" target="_blank" rel="noopener">National Land Numerical Information (MLIT Japan)</a>';
 
 export const HOKKAIDO_BOUNDS: [[number, number], [number, number]] = [
   [139.3, 41.3],
@@ -151,8 +151,8 @@ export function buildBaseStyle(t: MapTheme): StyleSpecification {
         layout: { 'line-join': 'round', 'line-cap': 'round' },
         paint: {
           'line-color': t.roads[key],
-          'line-width': ['interpolate', ['linear'], ['zoom'], 5, base * 2.5, 12, base * 7],
-          'line-blur': ['interpolate', ['linear'], ['zoom'], 5, 2, 12, 5],
+          'line-width': ['interpolate', ['linear'], ['zoom'], 5, base * 4, 12, base * 10],
+          'line-blur': ['interpolate', ['linear'], ['zoom'], 5, 3, 12, 7],
           'line-opacity': t.roadOpacity.glow[i],
         },
       },
@@ -165,7 +165,7 @@ export function buildBaseStyle(t: MapTheme): StyleSpecification {
         layout: { 'line-join': 'round', 'line-cap': 'round' },
         paint: {
           'line-color': t.roads[key],
-          'line-width': ['interpolate', ['linear'], ['zoom'], 5, base * 0.7, 12, base * 1.8],
+          'line-width': ['interpolate', ['linear'], ['zoom'], 5, base * 0.9, 12, base * 2],
           'line-opacity': t.roadOpacity.core[i],
         },
       },

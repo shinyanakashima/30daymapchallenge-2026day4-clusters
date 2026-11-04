@@ -9,6 +9,7 @@ import { MapView } from './components/MapView';
 import { Overlay } from './components/Overlay';
 import { exportPng } from './exportPng';
 import { loadStoredImport, storeImport, type ImportedSet } from './importGeojson';
+import { DICTS, I18n, initialLang, kindName, rememberLang, type Lang, type T } from './i18n';
 
 const GUIDE_KEY = 'd4-clusters-guide-closed';
 const readGuideClosed = () => {
@@ -31,6 +32,7 @@ export default function App() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
   const [edition, setEdition] = useState<Edition>(() => parseEdition(window.location.search));
+  const t = DICTS[initialLang(window.location.search)];
 
   useEffect(() => {
     let alive = true;
@@ -47,10 +49,10 @@ export default function App() {
   if (loadError) {
     return (
       <div className="fatal" role="alert">
-        <h1>データを読み込めませんでした</h1>
+        <h1>{t.loadFailed}</h1>
         <p>{loadError}</p>
         <button type="button" className="btn" onClick={() => setAttempt((n) => n + 1)}>
-          再試行
+          {t.retry}
         </button>
       </div>
     );
@@ -58,7 +60,7 @@ export default function App() {
   if (!data) {
     return (
       <div className="fatal" aria-busy="true">
-        <p>観光資源データを読み込んでいます…</p>
+        <p>{t.loading}</p>
       </div>
     );
   }
@@ -77,12 +79,16 @@ function useIsMobile() {
   return m;
 }
 
-function categoryLabel(cat: CategorySel, data: LoadedData): string {
-  if (cat.type === 'all') return 'すべて';
-  if (cat.type === 'group') return data.categories.groups.find((g) => g.key === cat.group)?.label ?? cat.group;
-  if (cat.keys.length === 0) return '種別なし';
-  const names = data.categories.kinds.filter((k) => cat.keys.includes(k.key)).map((k) => k.name);
-  return names.length <= 3 ? names.join('・') : `${names.slice(0, 3).join('・')} ほか${names.length - 3}種別`;
+function categoryLabel(cat: CategorySel, data: LoadedData, lang: Lang, t: T): string {
+  if (cat.type === 'all') return t.themeAll;
+  if (cat.type === 'group') {
+    const byKey: Record<string, string> = { nature: t.themeNature, culture: t.themeCulture, user: t.themeUser };
+    return byKey[cat.group] ?? data.categories.groups.find((g) => g.key === cat.group)?.label ?? cat.group;
+  }
+  if (cat.keys.length === 0) return t.catNone;
+  const sep = lang === 'en' ? ', ' : '・';
+  const names = data.categories.kinds.filter((k) => cat.keys.includes(k.key)).map((k) => kindName(k.name, lang));
+  return names.length <= 3 ? names.join(sep) : t.catMore(names.slice(0, 3).join(sep), names.length - 3);
 }
 
 function mergeData(base: LoadedData, imported: ImportedSet | null): LoadedData {
@@ -108,7 +114,15 @@ function Explorer({ data: baseData, onEdition }: { data: LoadedData; onEdition: 
   const validIds = useMemo(() => new Set(resources.map((r) => r.id)), [resources]);
   const isMobile = useIsMobile();
 
-  const [settings, setSettings] = useState<AppSettings>(() => parseSettings(window.location.search, validKinds, validIds));
+  const [settings, setSettings] = useState<AppSettings>(() => ({
+    ...parseSettings(window.location.search, validKinds, validIds),
+    lang: initialLang(window.location.search),
+  }));
+  const lang = settings.lang;
+  const t = DICTS[lang];
+  const tRef = useRef(t);
+  tRef.current = t;
+  useEffect(() => rememberLang(lang), [lang]);
   const [focusPoint, setFocusPoint] = useState(false);
   const [computed, setComputed] = useState<Computed | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -136,10 +150,8 @@ function Explorer({ data: baseData, onEdition }: { data: LoadedData; onEdition: 
       prevColors.current = null;
       setComputed(null); // 古い結果は削除・追加された地点を参照するので捨てる
       if (set) {
-        setNotice(
-          `${set.fileName} から ${set.resources.length} 地点を追加しました。` + (saved ? '' : '（このブラウザには保存できなかったため、再読み込みで消えます）'),
-        );
-      } else setNotice('追加データを取り消しました。');
+        setNotice(tRef.current.noticeImported(set.fileName, set.resources.length) + (saved ? '' : tRef.current.noticeNotSaved));
+      } else setNotice(tRef.current.noticeImportRemoved);
     },
     [],
   );
@@ -154,7 +166,7 @@ function Explorer({ data: baseData, onEdition }: { data: LoadedData; onEdition: 
     const timer = window.setTimeout(() => {
       // 計算は軽い (35 点) のでメインスレッドで行う。重くなったら Worker に移す。
       Promise.resolve().then(() => {
-        const result = computeClusters(id, index, byId, targetIds, settings.epsKm, settings.minPts, prevColors.current);
+        const result = computeClusters(id, index, byId, targetIds, settings.epsKm, settings.minPts, prevColors.current, lang);
         if (id !== latestReq.current) return; // 古い結果で上書きしない
         prevColors.current = result.groups.map((g) => ({ members: g.members, color: g.color }));
         setComputed(result);
@@ -162,7 +174,7 @@ function Explorer({ data: baseData, onEdition }: { data: LoadedData; onEdition: 
     }, delay);
     return () => window.clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [index, byId, targetIds, settings.epsKm, settings.minPts]);
+  }, [index, byId, targetIds, settings.epsKm, settings.minPts, lang]);
 
   // --- 選択の追従と、消えたときの通知 ---
   const prevSelState = useRef<{ id: number | null; inGroup: boolean }>({ id: null, inGroup: false });
@@ -175,14 +187,14 @@ function Explorer({ data: baseData, onEdition }: { data: LoadedData; onEdition: 
     }
     const r = byId.get(sel)!;
     if (!computed.targetIds.includes(sel)) {
-      setNotice(`「${r.name}」は選んだテーマに含まれないため、選択を外しました。`);
+      setNotice(tRef.current.noticeExcluded(r.name));
       update({ sel: null });
       return;
     }
     const inGroup = computed.groupOf.has(sel);
     const prev = prevSelState.current;
     if (prev.id === sel && prev.inGroup && !inGroup) {
-      setNotice(`「${r.name}」を含むまとまりは、この条件では孤立点になりました。`);
+      setNotice(tRef.current.noticeIsolated(r.name));
     }
     prevSelState.current = { id: sel, inGroup };
   }, [computed, settings.sel, byId, update]);
@@ -232,21 +244,22 @@ function Explorer({ data: baseData, onEdition }: { data: LoadedData; onEdition: 
     const url = `${window.location.origin}${window.location.pathname}?${serializeSettings(settings)}`;
     try {
       await navigator.clipboard.writeText(url);
-      setNotice(imported ? 'この設定の URL をコピーしました。追加データは URL に含まれないため、開いた人には元データだけが表示されます。' : 'この設定の URL をコピーしました。');
+      setNotice(imported ? t.noticeCopiedNoImport : t.noticeCopied);
     } catch {
-      window.prompt('この URL をコピーしてください', url);
+      window.prompt(t.copyPrompt, url);
     }
   };
 
   const save = async (title: string) => {
-    const t = cleanTitle(title);
-    update({ title: t });
-    if (!mapRef.current) throw new Error('地図の準備ができていません');
+    const ttl = cleanTitle(title);
+    update({ title: ttl });
+    if (!mapRef.current) throw new Error(t.mapNotReady);
     const res = await exportPng(mapRef.current, computed, resources, {
-      title: t,
+      title: ttl,
       epsKm: settings.epsKm,
       minPts: settings.minPts,
-      categoryLabel: categoryLabel(settings.cat, data),
+      categoryLabel: categoryLabel(settings.cat, data, lang, t),
+      lang,
       view: settings.view,
       userCount: imported?.resources.length ?? 0,
       showRoads: settings.showRoads,
@@ -262,7 +275,7 @@ function Explorer({ data: baseData, onEdition }: { data: LoadedData; onEdition: 
     a.click();
     window.setTimeout(() => URL.revokeObjectURL(a.href), 2000);
     return res.fallback
-      ? `背景地図を画像に入れられなかったため、背景を省いた出典付きの画像を保存しました。（${res.reason ?? '原因不明'}）`
+      ? t.pngFallback(res.reason ?? t.unknownCause)
       : null;
   };
 
@@ -276,6 +289,7 @@ function Explorer({ data: baseData, onEdition }: { data: LoadedData; onEdition: 
   const padding = isMobile ? { top: 110, right: 12, bottom: 140, left: 12 } : { top: 70, right: 40, bottom: 110, left: 40 };
 
   return (
+    <I18n.Provider value={{ lang, t }}>
     <div className={'app' + (isMobile ? ' is-mobile' : '')}>
       <div className="map-card">
         <MapView
@@ -297,7 +311,7 @@ function Explorer({ data: baseData, onEdition }: { data: LoadedData; onEdition: 
           onCandidates={setCandidates}
           onMove={onMove}
           onReady={(m) => (mapRef.current = m)}
-          onError={setMapError}
+          onError={(m) => setMapError(m ? t.tileError : null)}
         />
         <Overlay
           data={data}
@@ -323,7 +337,7 @@ function Explorer({ data: baseData, onEdition }: { data: LoadedData; onEdition: 
           onShare={share}
           onSave={save}
           isMobile={isMobile}
-          categoryLabel={categoryLabel(settings.cat, data)}
+          categoryLabel={categoryLabel(settings.cat, data, lang, t)}
           imported={imported}
           onImport={applyImport}
           onEdition={switchEdition}
@@ -332,7 +346,7 @@ function Explorer({ data: baseData, onEdition }: { data: LoadedData; onEdition: 
         {notice && (
           <div className="toast">
             <span>{notice}</span>
-            <button type="button" className="icon-button" onClick={() => setNotice(null)} aria-label="通知を閉じる">
+            <button type="button" className="icon-button" onClick={() => setNotice(null)} aria-label={t.close}>
               ×
             </button>
           </div>
@@ -351,12 +365,13 @@ function Explorer({ data: baseData, onEdition }: { data: LoadedData; onEdition: 
                 mapRef.current?.refreshTiles('photo');
               }}
             >
-              再試行
+              {t.retry}
             </button>
           </div>
         )}
       </div>
       </div>
     </div>
+    </I18n.Provider>
   );
 }

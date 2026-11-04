@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import maplibregl, { type GeoJSONSource, type Map as MLMap, type MapGeoJSONFeature } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { PALETTE, setPalette } from '../lib/colors';
+import { airportStatus, kindName, useI18n, type Lang, type T } from '../i18n';
 import type { Computed, Group } from '../model';
 import type { MapPos, Resource, ViewMode } from '../types';
 import { BLOB_THRESHOLD, blobRadiusKm, heatmapRadiusExpr, hexToRgba, metersPerPixel } from '../blob';
@@ -188,7 +189,7 @@ function stopPulse() {
 }
 
 /** 地点の属性をポップアップ用の DOM にする (名称は利用者データもあるので textContent で入れる)。 */
-function popupContent(r: Resource, group: Group | undefined, view: ViewMode, inTarget: boolean): HTMLElement {
+function popupContent(r: Resource, group: Group | undefined, view: ViewMode, inTarget: boolean, t: T, lang: Lang): HTMLElement {
   const el = document.createElement('div');
   el.className = 'pt-popup';
   const add = (tag: string, cls: string, text: string, color?: string) => {
@@ -204,16 +205,19 @@ function popupContent(r: Resource, group: Group | undefined, view: ViewMode, inT
     el.appendChild(e);
   };
   add('p', 'pt-popup-name', r.name);
-  add('p', 'pt-popup-meta', [r.kind, r.address || r.municipalities.map((m) => m.name ?? m.code).join('・')].filter(Boolean).join('／'));
-  if (!inTarget) add('p', 'pt-popup-cluster', 'いまのテーマの対象外');
+  add('p', 'pt-popup-meta', [kindName(r.kind, lang), r.address || r.municipalities.map((m) => m.name ?? m.code).join('・')].filter(Boolean).join(lang === 'en' ? ' / ' : '／'));
+  if (!inTarget) add('p', 'pt-popup-cluster', t.notInTheme);
   else if (view === 'clusters') {
-    if (group) add('p', 'pt-popup-cluster', `${group.label} のまとまり（${group.members.length} 地点）`, PALETTE[group.color]);
-    else add('p', 'pt-popup-cluster', '孤立点（どのまとまりにも入っていません）');
+    if (group) add('p', 'pt-popup-cluster', t.inCluster(group.label, group.members.length), PALETTE[group.color]);
+    else add('p', 'pt-popup-cluster', t.isolatedPopup);
   }
   return el;
 }
 
 export function MapView(props: Props) {
+  const i18n = useI18n();
+  const i18nRef = useRef(i18n);
+  i18nRef.current = i18n;
   const container = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MLMap | null>(null);
   const loaded = useRef(false);
@@ -270,7 +274,7 @@ export function MapView(props: Props) {
       const src = (e as unknown as { sourceId?: string }).sourceId;
       if (src === 'gsi' || src === 'dem' || src === 's2' || src === 'photo') {
         tileErrors++;
-        if (tileErrors >= 6) cb.current.onError('背景地図の一部を読み込めませんでした。観光資源の点とまとまりは表示できます。');
+        if (tileErrors >= 6) cb.current.onError('tiles');
       }
     });
     map.on('data', (e) => {
@@ -457,7 +461,7 @@ export function MapView(props: Props) {
         className: pinned ? 'is-pinned' : '',
       })
         .setLngLat([r.lon, r.lat])
-        .setDOMContent(popupContent(r, computed?.groupOf.get(id), view, inTarget))
+        .setDOMContent(popupContent(r, computed?.groupOf.get(id), view, inTarget, i18nRef.current.t, i18nRef.current.lang))
         .addTo(map);
       return popup;
     };
@@ -483,7 +487,7 @@ export function MapView(props: Props) {
       n.textContent = String(f.properties.name);
       const m = document.createElement('p');
       m.className = 'pt-popup-meta';
-      m.textContent = `${f.properties.municipality}／参考：2018年時点の道の駅`;
+      m.textContent = i18nRef.current.t.ekiMeta(String(f.properties.municipality));
       el.append(n, m);
       hoverPopup.current = new maplibregl.Popup({ closeButton: false, closeOnClick: false, offset: 8, maxWidth: '240px' })
         .setLngLat((f.geometry as GeoJSON.Point).coordinates as [number, number])
@@ -501,7 +505,7 @@ export function MapView(props: Props) {
       n.textContent = String(f.properties.name);
       const m = document.createElement('p');
       m.className = 'pt-popup-meta';
-      m.textContent = `空港／${f.properties.status}（2021年時点）`;
+      m.textContent = i18nRef.current.t.airportMeta(airportStatus(String(f.properties.status), i18nRef.current.lang));
       el.append(n, m);
       hoverPopup.current = new maplibregl.Popup({ closeButton: false, closeOnClick: false, offset: 10, maxWidth: '240px' })
         .setLngLat((f.geometry as GeoJSON.Point).coordinates as [number, number])
@@ -517,10 +521,10 @@ export function MapView(props: Props) {
       el.className = 'pt-popup';
       const n = document.createElement('p');
       n.className = 'pt-popup-name';
-      n.textContent = `${f.properties.name}駅`;
+      n.textContent = i18nRef.current.t.stationName(String(f.properties.name));
       const m = document.createElement('p');
       m.className = 'pt-popup-meta';
-      m.textContent = `${f.properties.lines}（${f.properties.operators}）／2025年末時点`;
+      m.textContent = i18nRef.current.t.stationMeta(String(f.properties.lines), String(f.properties.operators));
       el.append(n, m);
       hoverPopup.current = new maplibregl.Popup({ closeButton: false, closeOnClick: false, offset: 8, maxWidth: '260px' })
         .setLngLat((f.geometry as GeoJSON.Point).coordinates as [number, number])
@@ -652,5 +656,5 @@ export function MapView(props: Props) {
     else pinRef.current(pinned.id);
   }, [props.computed, props.view, props.selectedId]);
 
-  return <div ref={container} className="map" role="region" aria-label="北海道の観光資源とまとまりの地図" />;
+  return <div ref={container} className="map" role="region" aria-label={i18n.t.mapLabel} />;
 }

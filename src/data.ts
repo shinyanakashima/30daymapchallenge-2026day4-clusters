@@ -13,13 +13,13 @@ async function getJson<T>(path: string): Promise<T> {
   try {
     res = await fetch(`${base}${path}`);
   } catch {
-    throw new Error(`${path} を読み込めませんでした（ネットワークに接続できません）`);
+    throw new Error(`Could not load ${path} (network error) / ${path} を読み込めませんでした（ネットワークに接続できません）`);
   }
-  if (!res.ok) throw new Error(`${path} を読み込めませんでした（HTTP ${res.status}）`);
+  if (!res.ok) throw new Error(`Could not load ${path} (HTTP ${res.status}) / ${path} を読み込めませんでした（HTTP ${res.status}）`);
   try {
     return (await res.json()) as T;
   } catch {
-    throw new Error(`${path} の形式が正しくありません`);
+    throw new Error(`${path} has an invalid format / ${path} の形式が正しくありません`);
   }
 }
 
@@ -46,7 +46,7 @@ export async function loadData(edition: Edition = '2014'): Promise<LoadedData> {
     }))
     .sort((a, b) => a.id - b.id);
   if (resources.length !== manifest.stats.validPoints) {
-    throw new Error(`地点数が manifest と一致しません（${resources.length} / ${manifest.stats.validPoints}）`);
+    throw new Error(`Spot count does not match the manifest (${resources.length} / ${manifest.stats.validPoints}) / 地点数が manifest と一致しません`);
   }
   return { resources, categories, manifest };
 }

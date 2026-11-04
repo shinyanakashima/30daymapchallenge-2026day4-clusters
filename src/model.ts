@@ -36,11 +36,13 @@ export function selectIds(resources: readonly Resource[], cat: CategorySel): num
 const muniNames = (r: Resource): string[] =>
   r.municipalities.length ? r.municipalities.map((m) => m.name ?? m.code) : r.address ? [r.address] : [];
 
-export function groupLabel(munis: { name: string; count: number }[]): string {
-  if (munis.length === 0) return '追加データ';
+export function groupLabel(munis: { name: string; count: number }[], lang: 'en' | 'ja' = 'ja'): string {
+  if (munis.length === 0) return lang === 'en' ? 'Added data' : '追加データ';
+  const sep = lang === 'en' ? ' · ' : '・';
   if (munis.length === 1) return munis[0].name;
-  if (munis.length === 2) return `${munis[0].name}・${munis[1].name}`;
-  return `${munis[0].name}・${munis[1].name} ほか`;
+  if (munis.length === 2) return `${munis[0].name}${sep}${munis[1].name}`;
+  // 自治体名はデータの原文 (日本語)。英語画面では残りの数を「+n」で示す
+  return lang === 'en' ? `${munis[0].name}${sep}${munis[1].name} +${munis.length - 2}` : `${munis[0].name}・${munis[1].name} ほか`;
 }
 
 export function computeClusters(
@@ -51,6 +53,7 @@ export function computeClusters(
   epsKm: number,
   minPts: number,
   prev: readonly ColoredGroup[] | null,
+  lang: 'en' | 'ja' = 'ja',
 ): Computed {
   const r = dbscan(index, targetIds, { epsKm, minPts });
   const colors = assignColors(
@@ -77,7 +80,7 @@ export function computeClusters(
       centroid: [lon, lat],
       municipalities,
       kinds,
-      label: groupLabel(municipalities),
+      label: groupLabel(municipalities, lang),
     };
   });
   // 一覧は大きい順 → 最小 ID 順 (計算順の番号に依存させない)

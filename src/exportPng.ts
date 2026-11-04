@@ -22,14 +22,56 @@ export interface ExportInfo {
   showAirports: boolean;
   showRail: boolean;
   theme: MapThemeName;
+  lang: 'en' | 'ja';
   edition: '2014' | '2010';
 }
 
 const FONT = '"Hiragino Sans", "Noto Sans JP", "Yu Gothic", "Meiryo", sans-serif';
-const DATA_CREDIT_2014 = '出典：国土数値情報（観光資源 第2.2版）国土交通省／基準日 2014年9月30日／非商用利用';
-const DATA_CREDIT_2010 = '出典：国土数値情報（観光資源 第2.0版）国土交通省／2010年度作成（比較用）／非商用利用';
-const TILE_CREDIT_NIGHT = '背景：地理院ベクトルタイル（海岸線・道路）／地形：Terrain Tiles（Mapzen ほか）';
-const TILE_CREDIT_SAT = '背景：Sentinel-2 cloudless（EOX, Copernicus Sentinel data 2016）／地理院タイル（全国最新写真）／地理院ベクトルタイル';
+/** 画像に書き込む文言 (英語・日本語) */
+const TXT = {
+  en: {
+    credit2014: 'Data: National Land Numerical Information, Tourism Resources ver. 2.2 (MLIT Japan), as of 30 Sep 2014, non-commercial use',
+    credit2010: 'Data: National Land Numerical Information, Tourism Resources ver. 2.0 (MLIT Japan), FY2010 (for comparison), non-commercial use',
+    userData: (n: number) => ` + ${n} spots added by the user`,
+    tileNight: 'Base map: GSI Vector Tiles (coastlines, roads) / Terrain: Terrain Tiles (Mapzen and others)',
+    tileSat: 'Imagery: Sentinel-2 cloudless (EOX, contains modified Copernicus Sentinel data 2016) / GSI Tiles (seamless photo) / GSI Vector Tiles',
+    noTiles: 'Base map omitted because it could not be captured',
+    overlays: (list: string) => `${list}: National Land Numerical Information (MLIT Japan)`,
+    eki: 'Roadside stations (2018)',
+    airports: 'Airports (2021)',
+    rail: 'Railways (time series, FY2025)',
+    sep: ', ',
+    counts: (a: number, b: number, c: number) => `${a} spots · ${b} clusters · ${c} isolated`,
+    viewPoints: 'Points only',
+    viewClusters: (eps: number, min: number) => `Near = ${eps} km / ${min}+ spots make a cluster`,
+    theme: (l: string) => ` / Theme: ${l}`,
+    legendMember: 'Spots in a cluster (colors tell clusters apart)',
+    legendNoise: 'Isolated spots',
+    legendPoints: 'Representative points of tourism resources',
+    disclaimer: 'Clusters are based on straight-line distances between representative points, not on transport access or travel patterns.',
+  },
+  ja: {
+    credit2014: '出典：国土数値情報（観光資源 第2.2版）国土交通省／基準日 2014年9月30日／非商用利用',
+    credit2010: '出典：国土数値情報（観光資源 第2.0版）国土交通省／2010年度作成（比較用）／非商用利用',
+    userData: (n: number) => `＋利用者の追加データ ${n} 地点`,
+    tileNight: '背景：地理院ベクトルタイル（海岸線・道路）／地形：Terrain Tiles（Mapzen ほか）',
+    tileSat: '背景：Sentinel-2 cloudless（EOX, Copernicus Sentinel data 2016）／地理院タイル（全国最新写真）／地理院ベクトルタイル',
+    noTiles: '背景地図は取得できなかったため省略',
+    overlays: (list: string) => `${list}：国土数値情報 国土交通省`,
+    eki: '道の駅（2018年）',
+    airports: '空港（2021年）',
+    rail: '鉄道（鉄道時系列 2025年度版）',
+    sep: '・',
+    counts: (a: number, b: number, c: number) => `対象 ${a} 地点・まとまり ${b}・孤立点 ${c}`,
+    viewPoints: '点だけ表示',
+    viewClusters: (eps: number, min: number) => `近所とみなす距離 ${eps} km／${min} 地点から集まり`,
+    theme: (l: string) => `／テーマ：${l}`,
+    legendMember: 'まとまりに入る地点（色はまとまりの区別）',
+    legendNoise: '孤立点',
+    legendPoints: '観光資源の代表位置',
+    disclaimer: 'まとまりは代表位置間の距離による分類で、交通アクセスや周遊実績を示すものではありません。',
+  },
+};
 
 /** 地図キャンバスを 1 フレーム描画させてから取り出す (preserveDrawingBuffer 不要)。 */
 function grabMapCanvas(map: MLMap): Promise<HTMLCanvasElement> {
@@ -66,6 +108,7 @@ export async function exportPng(
   info: ExportInfo,
 ): Promise<{ blob: Blob; fallback: boolean; reason?: string }> {
   const T = THEMES[info.theme];
+  const X = TXT[info.lang];
   const MAP_BG = T.bg;
   const NOISE_FILL = T.noiseFill;
   const NOISE_STROKE = T.noiseStroke;
@@ -100,9 +143,9 @@ export async function exportPng(
   ctx.fillText(info.title || 'Shabon Hokkaido — How Near Is Near?', 20 * s, 34 * s);
   ctx.font = `${12.5 * s}px ${FONT}`;
   ctx.fillStyle = SUB;
-  const counts = computed ? `対象 ${computed.targetIds.length} 地点・まとまり ${computed.groups.length}・孤立点 ${computed.noise.length}` : '';
-  const viewLabel = info.view === 'points' ? '点だけ表示' : `近所とみなす距離 ${info.epsKm} km／${info.minPts} 地点から集まり`;
-  ctx.fillText(`${viewLabel}／テーマ：${info.categoryLabel}　${counts}`, 20 * s, 58 * s);
+  const counts = computed ? X.counts(computed.targetIds.length, computed.groups.length, computed.noise.length) : '';
+  const viewLabel = info.view === 'points' ? X.viewPoints : X.viewClusters(info.epsKm, info.minPts);
+  ctx.fillText(`${viewLabel}${X.theme(info.categoryLabel)}　${counts}`, 20 * s, 58 * s);
 
   // 地図部分
   const scale = mapH / (cssH * dpr) || 1;
@@ -207,8 +250,8 @@ export async function exportPng(
     ctx.fillStyle = PALETTE[0];
     ctx.fill();
     ctx.fillStyle = INK;
-    ctx.fillText('まとまりに入る地点（色はまとまりの区別）', x + 16 * s, ly);
-    x += ctx.measureText('まとまりに入る地点（色はまとまりの区別）').width + 36 * s;
+    ctx.fillText(X.legendMember, x + 16 * s, ly);
+    x += ctx.measureText(X.legendMember).width + 36 * s;
     ctx.beginPath();
     ctx.arc(x + 5 * s, ly - 4 * s, 4.5 * s, 0, Math.PI * 2);
     ctx.fillStyle = NOISE_FILL;
@@ -217,23 +260,23 @@ export async function exportPng(
     ctx.lineWidth = 1.8 * s;
     ctx.stroke();
     ctx.fillStyle = INK;
-    ctx.fillText('孤立点', x + 16 * s, ly);
+    ctx.fillText(X.legendNoise, x + 16 * s, ly);
   } else {
     ctx.beginPath();
     ctx.arc(x + 5 * s, ly - 4 * s, 5 * s, 0, Math.PI * 2);
     ctx.fillStyle = PLAIN_POINT;
     ctx.fill();
     ctx.fillStyle = INK;
-    ctx.fillText('観光資源の代表位置', x + 16 * s, ly);
+    ctx.fillText(X.legendPoints, x + 16 * s, ly);
   }
   ctx.fillStyle = SUB;
   ctx.font = `${11 * s}px ${FONT}`;
-  ctx.fillText('まとまりは代表位置間の距離による分類で、交通アクセスや周遊実績を示すものではありません。', 20 * s, fy + 50 * s);
-  ctx.fillText((() => { const c = info.edition === '2010' ? DATA_CREDIT_2010 : DATA_CREDIT_2014; return info.userCount ? `${c}＋利用者の追加データ ${info.userCount} 地点` : c; })(), 20 * s, fy + 70 * s);
-  const tile = mapCanvas ? (T.satellite ? TILE_CREDIT_SAT : TILE_CREDIT_NIGHT) : '背景地図は取得できなかったため省略';
+  ctx.fillText(X.disclaimer, 20 * s, fy + 50 * s);
+  ctx.fillText((info.edition === '2010' ? X.credit2010 : X.credit2014) + (info.userCount ? X.userData(info.userCount) : ''), 20 * s, fy + 70 * s);
+  const tile = mapCanvas ? (T.satellite ? X.tileSat : X.tileNight) : X.noTiles;
   ctx.fillText(tile, 20 * s, fy + 88 * s);
-  const overlays = [info.showEki ? '道の駅（2018年）' : '', info.showAirports ? '空港（2021年）' : '', info.showRail ? '鉄道（鉄道時系列 2025年度版）' : ''].filter(Boolean);
-  if (overlays.length && mapCanvas) ctx.fillText(`${overlays.join('・')}：国土数値情報 国土交通省`, 20 * s, fy + 106 * s);
+  const overlays = [info.showEki ? X.eki : '', info.showAirports ? X.airports : '', info.showRail ? X.rail : ''].filter(Boolean);
+  if (overlays.length && mapCanvas) ctx.fillText(X.overlays(overlays.join(X.sep)), 20 * s, fy + 106 * s);
 
   const blob = await new Promise<Blob | null>((res) => canvas.toBlob(res, 'image/png'));
   if (!blob) throw new Error('PNG を作成できませんでした');
