@@ -44,6 +44,7 @@ export function Overlay(p: Props) {
   const [pop, setPop] = useState<Pop | null>(null);
   const toggle = (k: Pop) => setPop((cur) => (cur === k ? null : k));
   const rootRef = useRef<HTMLDivElement>(null);
+  const bubbleRef = useRef<HTMLDivElement>(null);
   const anchors = useRef<Partial<Record<GuideAnchor, HTMLElement | null>>>({});
   const setAnchor = (k: GuideAnchor) => (el: HTMLElement | null) => {
     anchors.current[k] = el;
@@ -177,6 +178,7 @@ export function Overlay(p: Props) {
 
   return (
     <div className="overlay" ref={rootRef}>
+      <div className="bubbles" ref={bubbleRef} aria-hidden="true" />
       {/* 左上: タイトル */}
       <header className="float title-chip">
         <div>
@@ -419,7 +421,7 @@ export function Overlay(p: Props) {
           </div>
           <span className="bar-sep" aria-hidden="true" />
           <div className="bar-distance" ref={setAnchor('distance')}>
-            <DistanceControl value={settings.epsKm} onChange={(v) => update({ epsKm: v })} compact={p.isMobile} />
+            <DistanceControl value={settings.epsKm} onChange={(v) => update({ epsKm: v })} compact={p.isMobile} bubbleLayer={bubbleRef} />
           </div>
           <button type="button" ref={setButton('minpts')} className={'bar-button' + (pop === 'minpts' ? ' is-open' : '')} onClick={() => toggle('minpts')} aria-expanded={pop === 'minpts'}>
             {settings.minPts}地点〜
@@ -495,14 +497,89 @@ function Legend({ clusters }: { clusters: boolean }) {
   );
 }
 
-/** 操作バーに直接置く距離スライダー (数値入力つき) */
-function DistanceControl({ value, onChange, compact }: { value: number; onChange: (v: number) => void; compact: boolean }) {
+const reducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/** 表示用の数値を目標値へ短くカウントアップ／ダウンさせる */
+function useCountTo(target: number): number {
+  const [shown, setShown] = useState(target);
+  const shownRef = useRef(target);
+  useEffect(() => {
+    if (reducedMotion()) {
+      shownRef.current = target;
+      setShown(target);
+      return;
+    }
+    const from = shownRef.current;
+    if (from === target) return;
+    const t0 = performance.now();
+    const dur = Math.min(420, 120 + Math.abs(target - from) * 12);
+    let raf = 0;
+    const tick = (now: number) => {
+      const k = Math.min(1, (now - t0) / dur);
+      const eased = 1 - (1 - k) ** 3;
+      const v = Math.round(from + (target - from) * eased);
+      shownRef.current = v;
+      setShown(v);
+      if (k < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [target]);
+  return shown;
+}
+
+/**
+ * しゃぼん玉: 値を上げるとつまみから昇り、下げると小さく出てはじける。
+ * 地図の上の層に置き、操作バーの枠で切れないようにする。
+ */
+function spawnBubbles(layer: HTMLElement | null, from: HTMLElement | null, ratio: number, dir: 1 | -1, count: number) {
+  if (!layer || !from || reducedMotion()) return;
+  const lr = layer.getBoundingClientRect();
+  const fr = from.getBoundingClientRect();
+  const thumb = 28;
+  const x = fr.left - lr.left + thumb / 2 + ratio * (fr.width - thumb);
+  const y = fr.top - lr.top + fr.height / 2;
+  for (let i = 0; i < count; i++) {
+    if (layer.childElementCount > 40) layer.firstElementChild?.remove();
+    const b = document.createElement('span');
+    const size = dir > 0 ? 18 + Math.random() * 30 : 12 + Math.random() * 16;
+    b.className = 'bubble ' + (dir > 0 ? 'is-up' : 'is-down');
+    b.style.left = `${x + (Math.random() - 0.5) * 16}px`;
+    b.style.top = `${y}px`;
+    b.style.setProperty('--s', `${size}px`);
+    b.style.setProperty('--dx', `${(Math.random() - 0.5) * 70}px`);
+    b.style.setProperty('--dy', `${dir > 0 ? -(110 + Math.random() * 170) : -(26 + Math.random() * 40)}px`);
+    b.style.setProperty('--d', `${dir > 0 ? 1100 + Math.random() * 900 : 520 + Math.random() * 260}ms`);
+    b.style.setProperty('--h', `${Math.round(Math.random() * 360)}deg`);
+    b.addEventListener('animationend', () => b.remove());
+    layer.appendChild(b);
+  }
+}
+
+/** 操作バーに直接置く距離スライダー。数値は大きく出し、押すと数値入力に切り替わる */
+function DistanceControl({ value, onChange, compact, bubbleLayer }: { value: number; onChange: (v: number) => void; compact: boolean; bubbleLayer: React.RefObject<HTMLDivElement | null> }) {
+  const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(String(value));
   useEffect(() => setDraft(String(value)), [value]);
+  const rangeRef = useRef<HTMLInputElement>(null);
+  const prev = useRef(value);
+  const [bump, setBump] = useState<'' | 'up' | 'down'>('');
+  useEffect(() => {
+    const d = value - prev.current;
+    prev.current = value;
+    if (!d) return;
+    const ratio = (value - EPS_MIN) / (EPS_MAX - EPS_MIN);
+    spawnBubbles(bubbleLayer.current, rangeRef.current, ratio, d > 0 ? 1 : -1, Math.min(5, Math.max(2, Math.round(Math.abs(d) / 2))));
+    setBump(d > 0 ? 'up' : 'down');
+    const t = window.setTimeout(() => setBump(''), 260);
+    return () => window.clearTimeout(t);
+  }, [value, bubbleLayer]);
+  const shown = useCountTo(value);
   const commit = (raw: string) => {
     const n = Math.round(Number(raw));
     if (Number.isFinite(n) && raw.trim() !== '') onChange(Math.min(EPS_MAX, Math.max(EPS_MIN, n)));
     else setDraft(String(value));
+    setEditing(false);
   };
   const fill = `${((value - EPS_MIN) / (EPS_MAX - EPS_MIN)) * 100}%`;
   return (
@@ -513,6 +590,7 @@ function DistanceControl({ value, onChange, compact }: { value: number; onChange
         </label>
         <input
           id="eps"
+          ref={rangeRef}
           className="dist-range"
           type="range"
           min={EPS_MIN}
@@ -524,18 +602,37 @@ function DistanceControl({ value, onChange, compact }: { value: number; onChange
           aria-valuetext={`${value}km`}
         />
       </div>
-      <span className="num dist-value">
-        <input
-          type="number"
-          inputMode="numeric"
-          min={EPS_MIN}
-          max={EPS_MAX}
-          value={draft}
-          aria-label="近所とみなす距離（数値）"
-          onChange={(e) => setDraft(e.target.value)}
-          onBlur={(e) => commit(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && commit((e.target as HTMLInputElement).value)}
-        />
+      <span className="dist-value">
+        {editing ? (
+          <input
+            type="number"
+            inputMode="numeric"
+            min={EPS_MIN}
+            max={EPS_MAX}
+            value={draft}
+            autoFocus
+            aria-label="近所とみなす距離（km）"
+            onChange={(e) => setDraft(e.target.value)}
+            onBlur={(e) => commit(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') commit((e.target as HTMLInputElement).value);
+              if (e.key === 'Escape') {
+                setDraft(String(value));
+                setEditing(false);
+              }
+            }}
+          />
+        ) : (
+          <button
+            type="button"
+            className={'dist-number' + (bump ? ` is-${bump}` : '')}
+            onClick={() => setEditing(true)}
+            aria-label={`近所とみなす距離 ${value}km。押すと数値で入力できます`}
+            title="押すと数値で入力"
+          >
+            {shown}
+          </button>
+        )}
         <span className="unit">km</span>
       </span>
     </>

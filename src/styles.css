@@ -263,19 +263,39 @@ a { color: var(--accent); }
 /* スライダー: 太い帯と大きなつまみ。つまみより左を塗る */
 .dist-range { -webkit-appearance: none; appearance: none; width: 360px; height: 30px; margin: 0; background: transparent; cursor: pointer; }
 .dist-range:focus-visible { outline: none; }
-.dist-range::-webkit-slider-runnable-track { height: 10px; border-radius: 5px; background: linear-gradient(to right, var(--accent) var(--fill), rgba(20, 30, 50, 0.12) var(--fill)); }
-.dist-range::-webkit-slider-thumb { -webkit-appearance: none; width: 28px; height: 28px; margin-top: -9px; border-radius: 50%; background: #fff; border: 3px solid var(--accent); box-shadow: 0 3px 10px rgba(25, 40, 70, 0.35); }
+.dist-range::-webkit-slider-runnable-track {
+  height: 10px; border-radius: 5px;
+  background:
+    linear-gradient(to right, transparent var(--fill), #dfe3ea var(--fill)),
+    linear-gradient(90deg, #49b6f0, #7b8cf5 45%, #c27ce8 75%, #f08bbd);
+}
+.dist-range::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 30px; height: 30px; margin-top: -10px; border-radius: 50%;
+  background:
+    radial-gradient(circle at 32% 28%, #fff 0 14%, rgba(255, 255, 255, 0.4) 24%, rgba(255, 255, 255, 0) 42%),
+    radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.92) 50%, rgba(160, 215, 255, 0.95) 66%, rgba(214, 160, 255, 0.95) 80%, rgba(255, 170, 215, 0.95) 92%);
+  border: 1.5px solid rgba(255, 255, 255, 0.95);
+  box-shadow: 0 3px 12px rgba(25, 40, 70, 0.35), inset 0 -2px 4px rgba(120, 140, 220, 0.25);
+}
 .dist-range:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 4px rgba(47, 127, 200, 0.35), 0 3px 10px rgba(25, 40, 70, 0.35); }
-.dist-range::-moz-range-track { height: 10px; border-radius: 5px; background: rgba(20, 30, 50, 0.12); }
-.dist-range::-moz-range-progress { height: 10px; border-radius: 5px; background: var(--accent); }
-.dist-range::-moz-range-thumb { width: 22px; height: 22px; border-radius: 50%; background: #fff; border: 3px solid var(--accent); box-shadow: 0 3px 10px rgba(25, 40, 70, 0.35); }
+.dist-range::-moz-range-track { height: 10px; border-radius: 5px; background: #dfe3ea; }
+.dist-range::-moz-range-progress { height: 10px; border-radius: 5px; background: linear-gradient(90deg, #49b6f0, #7b8cf5 45%, #c27ce8 75%, #f08bbd); }
+.dist-range::-moz-range-thumb { width: 26px; height: 26px; border-radius: 50%; background: radial-gradient(circle at 32% 28%, #fff 0 14%, rgba(255, 255, 255, 0) 42%), radial-gradient(circle, rgba(255, 255, 255, 0.92) 50%, rgba(160, 215, 255, 0.95) 66%, rgba(214, 160, 255, 0.95) 80%, rgba(255, 170, 215, 0.95) 92%); border: 1.5px solid #fff; box-shadow: 0 3px 12px rgba(25, 40, 70, 0.35); }
 .dist-range:focus-visible::-moz-range-thumb { box-shadow: 0 0 0 4px rgba(47, 127, 200, 0.35); }
-/* 距離の数値: 大きな太字。そのまま書き換えられる */
-.dist-value { align-items: baseline; }
-.dist-value input { width: 64px; font-size: 26px; font-weight: 700; border: 0; border-bottom: 1.5px dashed var(--line-2); border-radius: 0; background: transparent; padding: 0 2px; text-align: right; color: var(--ink); -moz-appearance: textfield; }
+/* 距離の数値: 大きく出し、変わるときはカウントして弾む。押すと数値入力 */
+.dist-value { display: inline-flex; align-items: baseline; gap: 3px; min-width: 96px; justify-content: flex-end; }
+.dist-number {
+  border: 0; background: transparent; padding: 0 2px; cursor: text; font-variant-numeric: tabular-nums;
+  font-size: 34px; font-weight: 800; line-height: 1; letter-spacing: -0.01em; color: var(--ink);
+  min-width: 2.2ch; text-align: right; transition: transform 0.18s ease;
+}
+.dist-number:hover { color: var(--accent); }
+.dist-number.is-up { transform: translateY(-3px) scale(1.08); color: #2b6fb0; }
+.dist-number.is-down { transform: translateY(2px) scale(0.94); color: #7a4fb8; }
+.dist-value input { width: 74px; font-size: 28px; font-weight: 800; border: 0; border-bottom: 2px solid var(--accent); border-radius: 0; background: transparent; padding: 0 2px; text-align: right; color: var(--ink); -moz-appearance: textfield; }
 .dist-value input::-webkit-outer-spin-button, .dist-value input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-.dist-value input:focus { border-bottom-color: var(--accent); outline: none; }
-.dist-value .unit { font-size: 14px; font-weight: 600; color: var(--ink-2); min-width: 0; }
+.dist-value input:focus { outline: none; }
+.dist-value .unit { font-size: 15px; font-weight: 700; color: var(--ink-2); min-width: 0; }
 .bar-pop.is-anchored { position: absolute; bottom: 76px; max-height: min(58vh, 540px); }
 .bar-pop { width: min(400px, 100%); max-height: min(62vh, calc(100% - 150px)); overflow: auto; padding: 12px 16px 14px; }
 .pop-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
@@ -297,6 +317,34 @@ a { color: var(--accent); }
 .maplibregl-ctrl-bottom-right { margin: 0 16px 116px 0; }
 .maplibregl-ctrl-attrib { border-radius: 0 10px 0 0; }
 
+/* ---------- しゃぼん玉 ---------- */
+.bubbles { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 4; }
+.bubble {
+  position: absolute; width: var(--s); height: var(--s); margin: calc(var(--s) / -2) 0 0 calc(var(--s) / -2);
+  border-radius: 50%; pointer-events: none; will-change: transform, opacity;
+  background:
+    radial-gradient(circle at 30% 27%, rgba(255, 255, 255, 1) 0 8%, rgba(255, 255, 255, 0.45) 16%, rgba(255, 255, 255, 0) 32%),
+    radial-gradient(circle at 70% 76%, rgba(255, 255, 255, 0.5) 0 5%, rgba(255, 255, 255, 0) 14%),
+    radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.06) 52%, rgba(120, 205, 255, 0.75) 68%, rgba(205, 140, 255, 0.8) 80%, rgba(255, 170, 215, 0.9) 91%, rgba(255, 255, 255, 0.95) 97%);
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  filter: hue-rotate(var(--h)) saturate(1.2);
+  box-shadow: 0 0 14px rgba(190, 225, 255, 0.55), inset 0 0 6px rgba(255, 255, 255, 0.5);
+}
+.bubble.is-up { animation: bubble-up var(--d) cubic-bezier(0.2, 0.7, 0.3, 1) forwards; }
+.bubble.is-down { animation: bubble-pop var(--d) ease-out forwards; }
+@keyframes bubble-up {
+  0% { transform: translate(0, 0) scale(0.2); opacity: 0; }
+  12% { opacity: 1; }
+  70% { opacity: 0.9; }
+  100% { transform: translate(var(--dx), var(--dy)) scale(1); opacity: 0; }
+}
+@keyframes bubble-pop {
+  0% { transform: translate(0, 0) scale(0.3); opacity: 0; }
+  25% { opacity: 1; }
+  75% { transform: translate(calc(var(--dx) * 0.4), var(--dy)) scale(1); opacity: 1; }
+  100% { transform: translate(calc(var(--dx) * 0.4), var(--dy)) scale(1.7); opacity: 0; border-width: 0; }
+}
+
 /* ---------- スマホ ---------- */
 .is-mobile .map-card { inset: 8px; border-radius: 20px; }
 .is-mobile .title-chip { top: 10px; left: 10px; max-width: calc(100% - 20px); padding: 7px 8px 7px 12px; gap: 10px; }
@@ -311,7 +359,9 @@ a { color: var(--accent); }
 .is-mobile .bar-distance { order: -1; width: 100%; padding: 2px 8px 0; }
 .is-mobile .dist-main { flex: 1; min-width: 0; }
 .is-mobile .dist-range { width: 100%; }
-.is-mobile .dist-value input { font-size: 22px; width: 54px; }
+.is-mobile .dist-value input { font-size: 24px; width: 60px; }
+.is-mobile .dist-number { font-size: 28px; }
+.is-mobile .dist-value { min-width: 78px; }
 .is-mobile .control-bar .bar-sep { display: none; }
 .is-mobile .bar-button { padding: 6px 7px; font-size: 12.5px; }
 .is-mobile .bar-more { padding: 6px 9px; }
