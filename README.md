@@ -132,7 +132,9 @@ npm run dev
 npm test && npm run build   # 検証とビルド（dist/ に出力）
 ```
 
-`dist/` は相対パスで出力するので、GitHub Pages などの静的ホスティングにそのまま置ける。公開先は未定。
+公開先：https://shinyanakashima.github.io/30daymapchallenge-2026day4-clusters/
+
+`main` に push すると GitHub Actions（`.github/workflows/deploy.yml`）がテスト・ビルドし、`dist/` を `gh-pages` ブランチへ出力する。Pages の公開元は `gh-pages` ブランチのルート。
 
 ### 構成
 
