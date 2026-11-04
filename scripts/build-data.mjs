@@ -6,7 +6,7 @@
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
 
-const RAW = join(process.cwd(), 'data', 'raw');
+const RAW = join(process.cwd(), 'data', 'raw', 'P12-14_01_GML');
 const OUT = join(process.cwd(), 'public', 'data');
 const BASE = 'P12a-14_01';
 
@@ -74,7 +74,7 @@ const dbfBuf = await readFile(join(RAW, `${BASE}.dbf`));
 const prj = (await readFile(join(RAW, `${BASE}.prj`), 'utf8')).trim();
 let fetchedAt = null;
 try {
-  fetchedAt = (await readFile(join(RAW, 'fetched_at.txt'), 'utf8')).trim();
+  fetchedAt = (await readFile(join(RAW, '..', 'fetched_at.txt'), 'utf8')).trim();
 } catch {
   /* 取得日不明 */
 }

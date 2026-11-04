@@ -48,6 +48,10 @@
 
 国土数値情報「道の駅」平成30年（P35-18、非商用）から北海道分 **122 件**（全国 1,145 件）を `public/data/michinoeki.geojson` に抽出。ひし形で重ね、ホバーで名称と市町村を表示する。まとまりの計算には含めない。道路（高速・国道・道道など）とあわせて、パネルの凡例から表示を切り替えられる（URL `ov`）。
 
+### 参考レイヤ：空港
+
+国土数値情報「空港」令和3年（C28-21、**商用可**、基準日 2021年12月31日）から、行政区域コードが北海道（01）の空港を標点位置の点にした（`public/data/airports.geojson`、13 件。うち礼文空港は休止中）。供用中の空港をゆっくり明滅する光で示し、休止中は白抜き。`prefers-reduced-motion` では明滅しない。まとまりの計算には含めない。
+
 ### 配信ファイル（`public/data/`）
 
 - `resources.geojson`：観光資源点（ID 昇順、自治体コードと 2014 年時点の自治体名を同じレコードから対応付け）
@@ -108,7 +112,7 @@
 | `view` | `points` で点だけ表示 |
 | `map` | `経度,緯度,ズーム` |
 | `t` | 特集タイトル（40 字まで、テキストとして表示） |
-| `ov` | 参考レイヤ：`r`（道路）・`e`（道の駅）の組み合わせ、`none`。省略時は両方表示 |
+| `ov` | 参考レイヤ：`r`（道路）・`e`（道の駅）・`a`（空港）の組み合わせ、`none`。省略時はすべて表示 |
 
 不正な値はその項目だけ初期値に戻す。
 
@@ -121,11 +125,11 @@ npm ci
 ```
 
 ```bash
-npm run data:fetch   # 観光資源（北海道）と道の駅（全国）の ZIP を data/raw/ に取得・展開（data/raw は git 管理外）
+npm run data:fetch   # 観光資源（北海道）・道の駅（全国）・空港（全国）の ZIP を data/raw/ に取得・展開（data/raw は git 管理外）
 ```
 
 ```bash
-npm run data:build   # public/data/ の GeoJSON・カテゴリ表・manifest・道の駅を生成
+npm run data:build   # public/data/ の GeoJSON・カテゴリ表・manifest・道の駅・空港を生成
 ```
 
 ```bash
@@ -154,6 +158,7 @@ npm test && npm run build   # 検証とビルド（dist/ に出力）
 ## 出典
 
 - 国土数値情報（観光資源データ）国土交通省 https://nlftp.mlit.go.jp/ksj/gml/datalist/KsjTmplt-P12-v2_2.html
+- 国土数値情報（空港データ）国土交通省 https://nlftp.mlit.go.jp/ksj/gml/datalist/KsjTmplt-C28-2021.html
 - 国土数値情報（道の駅データ）国土交通省 https://nlftp.mlit.go.jp/ksj/gml/datalist/KsjTmplt-P35.html
 - 地理院ベクトルタイル 国土地理院 https://maps.gsi.go.jp/development/vt.html
 - Terrain Tiles（Mapzen ほか）https://github.com/tilezen/joerd/blob/master/docs/attribution.md

@@ -3,7 +3,7 @@
 import { readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
-const src = join(process.cwd(), 'data', 'raw', 'P35-18_GML', 'P35-18_Roadside_Station.geojson');
+const src = join(process.cwd(), 'data', 'raw', 'P35-18_GML', 'P35-18_GML', 'P35-18_Roadside_Station.geojson');
 const gj = JSON.parse(await readFile(src, 'utf8'));
 const all = gj.features.length;
 const features = gj.features

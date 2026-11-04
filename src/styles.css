@@ -212,6 +212,7 @@ a { color: var(--accent); }
 .lg-plain { background: #e9e5dd; box-shadow: none; }
 .lg-noise { width: 9px; height: 9px; border-radius: 50%; border: 1.6px solid #b8b3aa; }
 .lg-eki { width: 8px; height: 8px; border: 1.5px solid #d8d2c6; transform: rotate(45deg); margin: 0 1px; }
+.lg-airport { width: 7px; height: 7px; border-radius: 50%; background: #fff7e6; box-shadow: 0 0 0 1px #ffd98a, 0 0 7px 2px rgba(255, 217, 138, 0.6); margin: 0 2px; }
 .lg-road { width: 16px; height: 2px; border-radius: 1px; background: #7f97b8; }
 
 /* ---------- point popup ---------- */

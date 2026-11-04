@@ -243,6 +243,7 @@ function Explorer({ data: baseData }: { data: LoadedData }) {
       userCount: imported?.resources.length ?? 0,
       showRoads: settings.showRoads,
       showEki: settings.showEki,
+      showAirports: settings.showAirports,
     });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(res.blob);
@@ -273,6 +274,7 @@ function Explorer({ data: baseData }: { data: LoadedData }) {
         epsKm={settings.epsKm}
         showRoads={settings.showRoads}
         showEki={settings.showEki}
+        showAirports={settings.showAirports}
         initialPos={initialPos.current}
         padding={padding}
         onSelect={onSelect}
@@ -329,6 +331,7 @@ function Explorer({ data: baseData }: { data: LoadedData }) {
               onClick={() => {
                 setMapError(null);
                 mapRef.current?.refreshTiles('gsi');
+                mapRef.current?.refreshTiles('dem');
               }}
             >
               再試行

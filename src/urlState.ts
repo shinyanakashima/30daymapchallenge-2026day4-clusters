@@ -17,6 +17,7 @@ export const DEFAULTS: AppSettings = {
   title: '',
   showRoads: true,
   showEki: true,
+  showAirports: true,
 };
 
 const GROUPS: GroupKey[] = ['nature', 'culture', 'unclassified', 'user'];
@@ -73,9 +74,10 @@ export function parseSettings(search: string, validKinds: ReadonlySet<string>, v
   s.map = parseMap(q.get('map'));
   s.title = cleanTitle(q.get('t') ?? '');
   const ov = q.get('ov');
-  if (ov !== null && /^(none|[re]{1,2})$/.test(ov)) {
+  if (ov !== null && /^(none|[rea]{1,3})$/.test(ov)) {
     s.showRoads = ov.includes('r');
     s.showEki = ov.includes('e');
+    s.showAirports = ov.includes('a');
   }
   return s;
 }
@@ -90,6 +92,8 @@ export function serializeSettings(s: AppSettings): string {
   if (s.view === 'points') q.set('view', 'points');
   if (s.map) q.set('map', `${s.map.lon.toFixed(4)},${s.map.lat.toFixed(4)},${s.map.zoom.toFixed(2)}`);
   if (s.title) q.set('t', s.title);
-  if (!s.showRoads || !s.showEki) q.set('ov', (s.showRoads ? 'r' : '') + (s.showEki ? 'e' : '') || 'none');
+  if (!s.showRoads || !s.showEki || !s.showAirports) {
+    q.set('ov', (s.showRoads ? 'r' : '') + (s.showEki ? 'e' : '') + (s.showAirports ? 'a' : '') || 'none');
+  }
   return q.toString();
 }

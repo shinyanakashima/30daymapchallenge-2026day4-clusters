@@ -71,4 +71,5 @@ export interface AppSettings {
   /** 重ねて表示する参考レイヤ */
   showRoads: boolean;
   showEki: boolean;
+  showAirports: boolean;
 }

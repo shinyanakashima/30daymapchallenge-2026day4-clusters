@@ -16,6 +16,7 @@ interface Props {
   epsKm: number;
   showRoads: boolean;
   showEki: boolean;
+  showAirports: boolean;
   initialPos: MapPos | null;
   padding: { top: number; right: number; bottom: number; left: number };
   onSelect: (id: number | null) => void;
@@ -26,6 +27,29 @@ interface Props {
 }
 
 const EMPTY: GeoJSON.FeatureCollection = { type: 'FeatureCollection', features: [] };
+const AIRPORT = '#ffd98a';
+const AIRPORT_LAYERS = ['airport-halo', 'airport-glow', 'airport'];
+
+// 空港の光をゆっくり明滅させる。動きを減らす設定では止めたまま (静かな光) にする。
+let pulseFrame = 0;
+function startPulse(map: MLMap) {
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const t0 = performance.now();
+  let last = 0;
+  const tick = (now: number) => {
+    pulseFrame = requestAnimationFrame(tick);
+    if (now - last < 50) return; // 約 20fps で十分
+    last = now;
+    const k = (Math.sin(((now - t0) / 2600) * Math.PI * 2) + 1) / 2;
+    if (!map.getLayer('airport-halo')) return;
+    map.setPaintProperty('airport-halo', 'circle-radius', 13 + 9 * k);
+    map.setPaintProperty('airport-halo', 'circle-opacity', 0.28 - 0.14 * k);
+  };
+  pulseFrame = requestAnimationFrame(tick);
+}
+function stopPulse() {
+  cancelAnimationFrame(pulseFrame);
+}
 
 /** 地点の属性をポップアップ用の DOM にする (名称は利用者データもあるので textContent で入れる)。 */
 function popupContent(r: Resource, group: Group | undefined, view: ViewMode, inTarget: boolean): HTMLElement {
@@ -92,9 +116,9 @@ export function MapView(props: Props) {
     let tileErrors = 0;
     map.on('error', (e) => {
       const src = (e as unknown as { sourceId?: string }).sourceId;
-      if (src === 'gsi') {
+      if (src === 'gsi' || src === 'dem') {
         tileErrors++;
-        if (tileErrors >= 6) cb.current.onError('背景地図（地理院タイル）の一部を読み込めませんでした。観光資源の点とまとまりは表示できます。');
+        if (tileErrors >= 6) cb.current.onError('背景地図の一部を読み込めませんでした。観光資源の点とまとまりは表示できます。');
       }
     });
     map.on('data', (e) => {
@@ -181,6 +205,41 @@ export function MapView(props: Props) {
         paint: { 'icon-opacity': ['interpolate', ['linear'], ['zoom'], 5, 0.45, 9, 0.8] },
       });
       for (const id of ROAD_LAYER_IDS) map.setLayoutProperty(id, 'visibility', cb.current.showRoads ? 'visible' : 'none');
+
+      // 空港 (参考レイヤ): 供用中の空港をやわらかく光らせる
+      map.addSource('airports', { type: 'geojson', data: `${import.meta.env.BASE_URL}data/airports.geojson` });
+      const apVis = cb.current.showAirports ? 'visible' : 'none';
+      const inService = ['==', ['get', 'status'], '供用中'] as never;
+      map.addLayer({
+        id: 'airport-halo',
+        type: 'circle',
+        source: 'airports',
+        filter: inService,
+        layout: { visibility: apVis },
+        paint: { 'circle-radius': 16, 'circle-color': AIRPORT, 'circle-opacity': 0.22, 'circle-blur': 1 },
+      });
+      map.addLayer({
+        id: 'airport-glow',
+        type: 'circle',
+        source: 'airports',
+        filter: inService,
+        layout: { visibility: apVis },
+        paint: { 'circle-radius': 7, 'circle-color': AIRPORT, 'circle-opacity': 0.5, 'circle-blur': 0.8 },
+      });
+      map.addLayer({
+        id: 'airport',
+        type: 'circle',
+        source: 'airports',
+        layout: { visibility: apVis },
+        paint: {
+          'circle-radius': 3.6,
+          'circle-color': ['case', inService, '#fff7e6', MAP_BG],
+          'circle-stroke-color': ['case', inService, AIRPORT, '#8f8b84'],
+          'circle-stroke-width': ['case', inService, 1, 1.4],
+        },
+      });
+      startPulse(map);
+
       map.addLayer({
         id: 'pt-dim',
         type: 'circle',
@@ -297,6 +356,28 @@ export function MapView(props: Props) {
         .setDOMContent(el)
         .addTo(map);
     });
+    map.on('mousemove', 'airport', (e) => {
+      const f = e.features?.[0];
+      if (!f) return;
+      hoverPopup.current?.remove();
+      const el = document.createElement('div');
+      el.className = 'pt-popup';
+      const n = document.createElement('p');
+      n.className = 'pt-popup-name';
+      n.textContent = String(f.properties.name);
+      const m = document.createElement('p');
+      m.className = 'pt-popup-meta';
+      m.textContent = `空港／${f.properties.status}（2021年時点）`;
+      el.append(n, m);
+      hoverPopup.current = new maplibregl.Popup({ closeButton: false, closeOnClick: false, offset: 10, maxWidth: '240px' })
+        .setLngLat((f.geometry as GeoJSON.Point).coordinates as [number, number])
+        .setDOMContent(el)
+        .addTo(map);
+    });
+    map.on('mouseleave', 'airport', () => {
+      hoverPopup.current?.remove();
+      hoverPopup.current = null;
+    });
     map.on('mouseleave', 'eki', () => {
       map.getCanvas().style.cursor = '';
       hoverPopup.current?.remove();
@@ -323,6 +404,7 @@ export function MapView(props: Props) {
     });
 
     return () => {
+      stopPulse();
       markers.current.forEach((m) => m.remove());
       map.remove();
       mapRef.current = null;
@@ -392,7 +474,8 @@ export function MapView(props: Props) {
     if (!map || !loaded.current) return;
     for (const id of ROAD_LAYER_IDS) map.setLayoutProperty(id, 'visibility', props.showRoads ? 'visible' : 'none');
     map.setLayoutProperty('eki', 'visibility', props.showEki ? 'visible' : 'none');
-  }, [props.showRoads, props.showEki]);
+    for (const id of AIRPORT_LAYERS) map.setLayoutProperty(id, 'visibility', props.showAirports ? 'visible' : 'none');
+  }, [props.showRoads, props.showEki, props.showAirports]);
   // 再計算や選択解除に合わせて、残したポップアップを更新・閉じる
   useEffect(() => {
     const pinned = pinnedPopup.current;

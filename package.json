@@ -9,7 +9,7 @@
     "preview": "vite preview",
     "test": "vitest run",
     "data:fetch": "node scripts/fetch-data.mjs",
-    "data:build": "node scripts/build-data.mjs && node scripts/build-michinoeki.mjs",
+    "data:build": "node scripts/build-data.mjs && node scripts/build-michinoeki.mjs && node scripts/build-airports.mjs",
     "data:scan": "node scripts/scan-eps.mjs"
   },
   "dependencies": {

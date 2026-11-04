@@ -140,6 +140,21 @@
       "countAll": 1145,
       "count": 122,
       "note": "参考レイヤ。クラスタリングの対象には含めない。2018年時点の登録で、現在の営業を示さない。"
+    },
+    "airports": {
+      "name": "国土数値情報 空港データ 令和3年 (C28-21)",
+      "publisher": "国土交通省",
+      "pageUrl": "https://nlftp.mlit.go.jp/ksj/gml/datalist/KsjTmplt-C28-2021.html",
+      "downloadUrl": "https://nlftp.mlit.go.jp/ksj/gml/data/C28/C28-21/C28-21_GML.zip",
+      "referenceDate": "2021-12-31",
+      "license": "商用可 (配布ページの使用許諾条件)",
+      "method": "空港 (C28_001 行政区域コードが 01 で始まるもの) を標点 (C28_101 → AirportReferencePoint) の位置で点にした。同じ標点を持つ地物は 1 件にまとめた。",
+      "count": 13,
+      "statuses": {
+        "供用中": 12,
+        "休止中": 1
+      },
+      "note": "参考レイヤ。クラスタリングの対象には含めない。"
     }
   }
 }

@@ -17,6 +17,7 @@ describe('urlState', () => {
       title: '道東の湖',
       showRoads: false,
       showEki: true,
+      showAirports: false,
     };
     expect(parseSettings('?' + serializeSettings(s), kinds, ids)).toEqual(s);
   });
