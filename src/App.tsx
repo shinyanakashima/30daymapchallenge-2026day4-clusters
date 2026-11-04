@@ -273,7 +273,7 @@ function Explorer({ data: baseData, onEdition }: { data: LoadedData; onEdition: 
   }, [settings.sel, computed, index, byId]);
 
   // 上の札と下の操作バーの分だけ余白をとって北海道全体を収める
-  const padding = isMobile ? { top: 110, right: 12, bottom: 140, left: 12 } : { top: 70, right: 40, bottom: 96, left: 40 };
+  const padding = isMobile ? { top: 110, right: 12, bottom: 140, left: 12 } : { top: 70, right: 40, bottom: 110, left: 40 };
 
   return (
     <div className={'app' + (isMobile ? ' is-mobile' : '')}>
@@ -347,6 +347,8 @@ function Explorer({ data: baseData, onEdition }: { data: LoadedData; onEdition: 
                 setMapError(null);
                 mapRef.current?.refreshTiles('gsi');
                 mapRef.current?.refreshTiles('dem');
+                mapRef.current?.refreshTiles('s2');
+                mapRef.current?.refreshTiles('photo');
               }}
             >
               再試行

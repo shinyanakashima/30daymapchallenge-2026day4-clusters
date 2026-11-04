@@ -3,6 +3,8 @@ import type { Map as MLMap, StyleSpecification } from 'maplibre-gl';
 export type MapThemeName = 'day' | 'night';
 
 export interface MapTheme {
+  /** 背景を衛星画像にする (false なら地形の陰影) */
+  satellite: boolean;
   bg: string;
   relief: (string | number)[];
   hillShadow: string;
@@ -39,42 +41,44 @@ export interface MapTheme {
 }
 
 export const THEMES: Record<MapThemeName, MapTheme> = {
-  // 昼: 白い陸と淡い水色の海
+  // 昼: 衛星画像 (地理院タイル 全国最新写真 (シームレス))。線と点は明るい色で重ねる
   day: {
-    bg: '#cfe5f2',
+    satellite: true,
+    bg: '#14293a',
     relief: [-4000, '#a9cfe6', -200, '#c3dff0', -1, '#cfe5f2', 0, '#fbfaf7', 400, '#f5f3ee', 1200, '#ece9e2', 2000, '#e3dfd7'],
     hillShadow: 'rgba(70, 80, 95, 0.38)',
     hillHighlight: 'rgba(255, 255, 255, 0.7)',
     hillExaggeration: 0.35,
-    coast: '#8fb8d3',
-    coastOpacity: 0.9,
-    coastGlowOpacity: 0.12,
-    roads: { motorway: '#e0a35c', national: '#c3bdb2', other: '#d6d1c8' },
-    roadOpacity: { core: [0.8, 0.9], glow: [0, 0.12] },
-    label: '#5a6170',
-    labelHalo: 'rgba(255, 255, 255, 0.95)',
-    ink: '#1d2330',
-    memberStroke: '#ffffff',
-    noiseFill: '#ffffff',
-    noiseStroke: '#6b7280',
-    plainPoint: '#3a4150',
-    airport: '#ff9a3c',
+    coast: '#ffffff',
+    coastOpacity: 0,
+    coastGlowOpacity: 0,
+    roads: { motorway: '#ffd79a', national: '#ffffff', other: '#ffffff' },
+    roadOpacity: { core: [0.22, 0.42], glow: [0, 0.08] },
+    label: '#ffffff',
+    labelHalo: 'rgba(10, 20, 30, 0.75)',
+    ink: '#ffffff',
+    memberStroke: '#1d2330',
+    noiseFill: '#1d2330',
+    noiseStroke: '#ffffff',
+    plainPoint: '#ffffff',
+    airport: '#ffb347',
     airportCore: '#ffffff',
-    airportGlow: 1.8,
+    airportGlow: 1.4,
     ekiFill: '#ffffff',
-    ekiStroke: '#7b8494',
-    blobAlpha: 0.24,
-    rail: '#4a5262',
-    railDash: '#ffffff',
-    railGlowOpacity: 0,
-    railHistory: '#8e97a8',
+    ekiStroke: '#1d2330',
+    blobAlpha: 0.3,
+    rail: '#ffffff',
+    railDash: '#3a4150',
+    railGlowOpacity: 0.12,
+    railHistory: '#dfe4ea',
     stationFill: '#ffffff',
-    stationStroke: '#3a4150',
-    selectedOverlay: 'rgba(29, 35, 48, 0.1)',
-    palette: ['#d9822b', '#1f9e94', '#7b61c9', '#5f9a2e', '#d0573a', '#2f7fc8', '#c2508a', '#2a9d6f'],
+    stationStroke: '#1d2330',
+    selectedOverlay: 'rgba(255, 255, 255, 0.16)',
+    palette: ['#ffb347', '#3fd0c9', '#b79bff', '#a8e063', '#ff8a65', '#6fb6ff', '#ff7eb6', '#7ef0c0'],
   },
   // 夜: 暗い地形と淡く光る海岸線・道路
   night: {
+    satellite: false,
     bg: '#0d1117',
     relief: [-4000, '#0a0e14', -200, '#0e131a', -1, '#10161e', 0, '#1b1e23', 300, '#202328', 1000, '#272a2f', 2000, '#303338'],
     hillShadow: '#000000',
@@ -109,9 +113,13 @@ export const THEMES: Record<MapThemeName, MapTheme> = {
   },
 };
 
-export const TILE_ATTRIBUTION =
-  '<a href="https://maps.gsi.go.jp/development/vt.html" target="_blank" rel="noopener">地理院ベクトルタイル</a>' +
-  '｜地形 <a href="https://github.com/tilezen/joerd/blob/master/docs/attribution.md" target="_blank" rel="noopener">Terrain Tiles (Mapzen ほか)</a>';
+export const S2_ATTRIBUTION =
+  '<a href="https://s2maps.eu" target="_blank" rel="noopener">Sentinel-2 cloudless - https://s2maps.eu by EOX IT Services GmbH (Contains modified Copernicus Sentinel data 2016)</a>';
+export const PHOTO_ATTRIBUTION =
+  '<a href="https://maps.gsi.go.jp/development/ichiran.html#seamlessphoto" target="_blank" rel="noopener">地理院タイル（全国最新写真（シームレス））</a>';
+export const TILE_ATTRIBUTION = '<a href="https://maps.gsi.go.jp/development/vt.html" target="_blank" rel="noopener">地理院ベクトルタイル</a>';
+export const DEM_ATTRIBUTION =
+  '地形 <a href="https://github.com/tilezen/joerd/blob/master/docs/attribution.md" target="_blank" rel="noopener">Terrain Tiles (Mapzen ほか)</a>';
 export const DATA_ATTRIBUTION =
   '<a href="https://nlftp.mlit.go.jp/ksj/gml/datalist/KsjTmplt-P12-v2_2.html" target="_blank" rel="noopener">国土数値情報（観光資源・道の駅・空港・鉄道時系列）国土交通省</a>';
 
@@ -174,6 +182,23 @@ export function buildBaseStyle(t: MapTheme): StyleSpecification {
         tileSize: 256,
         minzoom: 0,
         maxzoom: 12,
+        attribution: DEM_ATTRIBUTION,
+      },
+      s2: {
+        type: 'raster',
+        tiles: ['https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless_3857/default/g/{z}/{y}/{x}.jpg'],
+        tileSize: 256,
+        minzoom: 0,
+        maxzoom: 13,
+        attribution: S2_ATTRIBUTION,
+      },
+      photo: {
+        type: 'raster',
+        tiles: ['https://cyberjapandata.gsi.go.jp/xyz/seamlessphoto/{z}/{x}/{y}.jpg'],
+        tileSize: 256,
+        minzoom: 11,
+        maxzoom: 18,
+        attribution: PHOTO_ATTRIBUTION,
       },
       gsi: {
         type: 'vector',
@@ -189,17 +214,42 @@ export function buildBaseStyle(t: MapTheme): StyleSpecification {
         id: 'relief',
         type: 'color-relief',
         source: 'dem',
+        layout: { visibility: t.satellite ? 'none' : 'visible' },
         paint: { 'color-relief-color': ['interpolate', ['linear'], ['elevation'], ...t.relief] as never },
       },
       {
         id: 'hillshade',
         type: 'hillshade',
         source: 'dem',
+        layout: { visibility: t.satellite ? 'none' : 'visible' },
         paint: {
           'hillshade-exaggeration': t.hillExaggeration,
           'hillshade-shadow-color': t.hillShadow,
           'hillshade-highlight-color': t.hillHighlight,
           'hillshade-accent-color': 'rgba(0,0,0,0)',
+        },
+      },
+      // 縮小〜中縮尺は Sentinel-2 cloudless、大きく拡大したら地理院の写真に切り替える。
+      // 少しだけ彩度と明るさを落として、まとまりの色を目立たせる
+      {
+        id: 's2',
+        type: 'raster',
+        source: 's2',
+        maxzoom: 13,
+        layout: { visibility: t.satellite ? 'visible' : 'none' },
+        paint: { 'raster-saturation': -0.1, 'raster-brightness-max': 0.9, 'raster-contrast': 0.05 },
+      },
+      {
+        id: 'photo',
+        type: 'raster',
+        source: 'photo',
+        minzoom: 11.5,
+        layout: { visibility: t.satellite ? 'visible' : 'none' },
+        paint: {
+          'raster-saturation': -0.15,
+          'raster-brightness-max': 0.9,
+          'raster-contrast': 0.05,
+          'raster-opacity': ['interpolate', ['linear'], ['zoom'], 11.5, 0, 12.5, 1],
         },
       },
       ...roads,
@@ -246,6 +296,10 @@ export function buildBaseStyle(t: MapTheme): StyleSpecification {
 /** 背景部分の配色だけを切り替える (データ側のレイヤは MapView が塗り直す)。 */
 export function applyBaseTheme(map: MLMap, t: MapTheme) {
   map.setPaintProperty('sea', 'background-color', t.bg);
+  map.setLayoutProperty('s2', 'visibility', t.satellite ? 'visible' : 'none');
+  map.setLayoutProperty('photo', 'visibility', t.satellite ? 'visible' : 'none');
+  map.setLayoutProperty('relief', 'visibility', t.satellite ? 'none' : 'visible');
+  map.setLayoutProperty('hillshade', 'visibility', t.satellite ? 'none' : 'visible');
   map.setPaintProperty('relief', 'color-relief-color', ['interpolate', ['linear'], ['elevation'], ...t.relief]);
   map.setPaintProperty('hillshade', 'hillshade-exaggeration', t.hillExaggeration);
   map.setPaintProperty('hillshade', 'hillshade-shadow-color', t.hillShadow);

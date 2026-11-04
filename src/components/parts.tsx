@@ -204,11 +204,19 @@ export function About({ data }: { data: LoadedData }) {
         <a href="https://github.com/shinyanakashima/30daymapchallenge-2026day1-station-history" target="_blank" rel="noopener">
           Day1 作品
         </a>
-        で加工）。背景：
+        で加工）。衛星写真：
+        <a href="https://s2maps.eu" target="_blank" rel="noopener">
+          Sentinel-2 cloudless - https://s2maps.eu by EOX IT Services GmbH (Contains modified Copernicus Sentinel data 2016)
+        </a>
+        、
+        <a href="https://maps.gsi.go.jp/development/ichiran.html" target="_blank" rel="noopener">
+          地理院タイル（全国最新写真（シームレス））
+        </a>
+        。海岸線・道路・地名：
         <a href="https://maps.gsi.go.jp/development/vt.html" target="_blank" rel="noopener">
           地理院ベクトルタイル
         </a>
-        、地形：
+        。夜の地形：
         <a href="https://github.com/tilezen/joerd/blob/master/docs/attribution.md" target="_blank" rel="noopener">
           Terrain Tiles（Mapzen ほか）
         </a>

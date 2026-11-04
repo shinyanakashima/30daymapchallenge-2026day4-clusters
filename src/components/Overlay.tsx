@@ -339,8 +339,8 @@ export function Overlay(p: Props) {
                   <div className="seg seg-small" role="radiogroup" aria-label="背景地図">
                     {(
                       [
-                        ['day', '昼'],
-                        ['night', '夜'],
+                        ['day', '衛星写真'],
+                        ['night', '夜の地形'],
                       ] as const
                     ).map(([key, label]) => (
                       <button key={key} type="button" role="radio" aria-checked={settings.theme === key} onClick={() => update({ theme: key })}>
@@ -504,22 +504,27 @@ function DistanceControl({ value, onChange, compact }: { value: number; onChange
     if (Number.isFinite(n) && raw.trim() !== '') onChange(Math.min(EPS_MAX, Math.max(EPS_MIN, n)));
     else setDraft(String(value));
   };
+  const fill = `${((value - EPS_MIN) / (EPS_MAX - EPS_MIN)) * 100}%`;
   return (
     <>
-      <label htmlFor="eps" className="bar-label">
-        {compact ? '距離' : '近所とみなす距離'}
-      </label>
-      <input
-        id="eps"
-        type="range"
-        min={EPS_MIN}
-        max={EPS_MAX}
-        step={1}
-        value={value}
-        onChange={(e) => onChange(Number(e.target.value))}
-        aria-valuetext={`${value}km`}
-      />
-      <span className="num">
+      <div className="dist-main">
+        <label htmlFor="eps" className="dist-label">
+          近所とみなす距離{compact ? '' : '（スライダーで変えると、まとまりが組み変わります）'}
+        </label>
+        <input
+          id="eps"
+          className="dist-range"
+          type="range"
+          min={EPS_MIN}
+          max={EPS_MAX}
+          step={1}
+          value={value}
+          style={{ ['--fill' as string]: fill }}
+          onChange={(e) => onChange(Number(e.target.value))}
+          aria-valuetext={`${value}km`}
+        />
+      </div>
+      <span className="num dist-value">
         <input
           type="number"
           inputMode="numeric"

@@ -134,7 +134,10 @@
 - GeoJSON（点）の読み込み：利用者が好きな地点を追加できる。ファイルは送信せずブラウザ内で処理し、このブラウザに保存する。名称は `name`／`名称`、種別は `kind`／`category`／`種別` などから読み取る。テーマ「すべて」で元データと合算、「追加データ」で追加分だけをまとめる。上限 2,000 地点・10MB。線・面は使わない。追加データは共有 URL に含まれず、PNG には件数を明記する
 - PNG 保存（任意の特集タイトル、凡例・出典・基準日入り）。背景地図を取り出せない場合は背景を省いた出典付き画像に切り替える
 - キーボード操作、スライダーの数値入力、色以外の選択強調（にじみを濃く・メンバー点を濃い縁取り・一覧は太枠）、孤立点は白抜き、`prefers-reduced-motion` 対応
-- 背景地図は「昼」（白い陸と淡い水色の海、既定）と「夜」（暗い地形と淡く光る海岸線・道路）を切り替えられる（URL `bm=night`）。地形の陰影と陸海の色分けは Terrain Tiles（Mapzen ほか、AWS Open Data）、海岸線・道路・地名は地理院ベクトルタイル（最適化ベクトルタイル）。いずれも CORS 対応で PNG 保存に入る。API キー・常駐サーバー・実行時 AI は不要
+- 背景は「衛星写真」（既定）と「夜の地形」を切り替えられる（URL `bm=night`）
+  - 衛星写真：縮小〜中縮尺は Sentinel-2 cloudless 2016（EOX、CC BY 4.0）、ズーム約12以上は地理院タイル（全国最新写真（シームレス））。地理院の写真は縮小時の世界衛星モザイクにデータのない灰色の帯があるため、拡大時だけ使う
+  - 夜の地形：Terrain Tiles（Mapzen ほか、AWS Open Data）の陰影と陸海の色分け
+  - 海岸線・道路・地名は地理院ベクトルタイル（最適化ベクトルタイル）。いずれも CORS 対応で PNG 保存に入る。API キー・常駐サーバー・実行時 AI は不要
 
 ### URL パラメータ
 
@@ -191,7 +194,7 @@ SNS 共有用のプレビュー画像 `public/og.png` は `node scripts/make-og.
 ### 構成
 
 - Vite 7.3.7 ＋ React 19.2.9 ＋ TypeScript 5.9.3 ＋ MapLibre GL JS 5.24.0（依存バージョンは固定）
-- 背景地図：Terrain Tiles（地形）と地理院ベクトルタイル（海岸線・道路・地名）。昼／夜の配色は `src/mapStyle.ts`
+- 背景地図：Sentinel-2 cloudless と地理院タイル（衛星写真）、Terrain Tiles（夜の地形）、地理院ベクトルタイル（海岸線・道路・地名）。配色は `src/mapStyle.ts`
 - `src/components/Overlay.tsx`：地図の上に重ねる UI（札・操作バー・窓・ガイド）
 - `src/lib/`：距離・DBSCAN・配色の計算モジュール、`src/blob.ts`：にじみの寸法
 - `tests/`：計算（距離境界・孤立点・同位置点・連鎖・minPts・カテゴリ変更後の再計算・再現性・色の引き継ぎ）、URL、配信データ件数の検証
@@ -203,6 +206,8 @@ SNS 共有用のプレビュー画像 `public/og.png` は `node scripts/make-og.
 - 国土数値情報（空港データ）国土交通省 https://nlftp.mlit.go.jp/ksj/gml/datalist/KsjTmplt-C28-2021.html
 - 国土数値情報（道の駅データ）国土交通省 https://nlftp.mlit.go.jp/ksj/gml/datalist/KsjTmplt-P35.html
 - 地理院ベクトルタイル 国土地理院 https://maps.gsi.go.jp/development/vt.html
+- Sentinel-2 cloudless - https://s2maps.eu by EOX IT Services GmbH (Contains modified Copernicus Sentinel data 2016)（CC BY 4.0）
+- 地理院タイル（全国最新写真（シームレス））国土地理院 https://maps.gsi.go.jp/development/ichiran.html
 - Terrain Tiles（Mapzen ほか）https://github.com/tilezen/joerd/blob/master/docs/attribution.md
 
 制作背景として参照した資料（アプリで周遊の不足や交通の不便さを検証したものではない）：

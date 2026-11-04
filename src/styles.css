@@ -210,7 +210,7 @@ a { color: var(--accent); }
   inset: 36px 40px 52px;
   border-radius: 28px;
   overflow: hidden;
-  background: #cfe5f2;
+  background: #14293a;
   box-shadow:
     0 60px 100px -40px rgba(25, 40, 70, 0.5),
     0 24px 48px -24px rgba(25, 40, 70, 0.28),
@@ -236,7 +236,7 @@ a { color: var(--accent); }
 .round-button { width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--line-2); background: #fff; cursor: pointer; flex: none; font-weight: 700; color: var(--ink-2); }
 .round-button:hover { background: var(--surface); }
 
-.top-right { position: absolute; top: 18px; right: 18px; bottom: 96px; width: 340px; display: flex; flex-direction: column; align-items: flex-end; gap: 10px; pointer-events: none; }
+.top-right { position: absolute; top: 18px; right: 18px; bottom: 116px; width: 340px; display: flex; flex-direction: column; align-items: flex-end; gap: 10px; pointer-events: none; }
 .stats-chip { display: flex; align-items: center; gap: 12px; padding: 9px 14px 9px 16px; font-size: 13px; cursor: pointer; color: var(--ink); white-space: nowrap; }
 .stats-chip span + span { color: var(--ink-2); }
 .stats-chip span:first-child { font-weight: 700; }
@@ -248,19 +248,35 @@ a { color: var(--accent); }
 .float-card .card { background: rgba(255, 255, 255, 0.94); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); border-color: rgba(255, 255, 255, 0.8); box-shadow: 0 14px 34px -12px rgba(25, 40, 70, 0.38); }
 .float-card .picked { background: rgba(255, 255, 255, 0.94); border-radius: 12px; padding: 6px 12px; margin-bottom: 6px; }
 
-.bottom { position: absolute; left: 0; right: 0; bottom: 26px; display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 0 16px; pointer-events: none; }
-.control-bar { display: flex; align-items: center; gap: 6px; padding: 6px; border-radius: 999px; max-width: 100%; overflow-x: auto; scrollbar-width: none; }
+.bottom { position: absolute; left: 0; right: 0; bottom: 40px; display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 0 16px; pointer-events: none; }
+.control-bar { display: flex; align-items: center; gap: 6px; padding: 8px 8px 8px 10px; border-radius: 999px; max-width: 100%; overflow-x: auto; scrollbar-width: none; }
 .control-bar::-webkit-scrollbar { display: none; }
 .control-bar .view-toggle { flex: none; }
 .bar-sep { width: 1px; height: 22px; background: var(--line); flex: none; }
-.bar-button { flex: none; border: 0; background: transparent; border-radius: 999px; padding: 7px 13px; font-size: 13px; cursor: pointer; white-space: nowrap; color: var(--ink); }
+.bar-button { flex: none; border: 0; background: transparent; border-radius: 999px; padding: 6px 11px; font-size: 12.5px; cursor: pointer; white-space: nowrap; color: var(--ink); }
 .bar-button:hover, .bar-button.is-open { background: var(--surface-2); }
 .bar-more { font-weight: 700; letter-spacing: 0.1em; padding: 7px 12px; }
 .bar-label { font-size: 11.5px; color: var(--ink-3); margin-right: 6px; white-space: nowrap; }
-.bar-distance { flex: none; display: flex; align-items: center; gap: 4px; padding: 0 6px; border-radius: 999px; }
-.bar-distance input[type='range'] { width: 150px; accent-color: var(--accent); }
-.bar-distance .num input { width: 52px; }
-.bar-pop.is-anchored { position: absolute; bottom: 62px; max-height: min(58vh, 540px); }
+.bar-distance { flex: none; display: flex; align-items: center; gap: 10px; padding: 2px 10px 2px 14px; }
+.dist-main { display: flex; flex-direction: column; gap: 0; }
+.dist-label { font-size: 11px; color: var(--ink-3); white-space: nowrap; padding-left: 2px; }
+/* スライダー: 太い帯と大きなつまみ。つまみより左を塗る */
+.dist-range { -webkit-appearance: none; appearance: none; width: 360px; height: 30px; margin: 0; background: transparent; cursor: pointer; }
+.dist-range:focus-visible { outline: none; }
+.dist-range::-webkit-slider-runnable-track { height: 10px; border-radius: 5px; background: linear-gradient(to right, var(--accent) var(--fill), rgba(20, 30, 50, 0.12) var(--fill)); }
+.dist-range::-webkit-slider-thumb { -webkit-appearance: none; width: 28px; height: 28px; margin-top: -9px; border-radius: 50%; background: #fff; border: 3px solid var(--accent); box-shadow: 0 3px 10px rgba(25, 40, 70, 0.35); }
+.dist-range:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 4px rgba(47, 127, 200, 0.35), 0 3px 10px rgba(25, 40, 70, 0.35); }
+.dist-range::-moz-range-track { height: 10px; border-radius: 5px; background: rgba(20, 30, 50, 0.12); }
+.dist-range::-moz-range-progress { height: 10px; border-radius: 5px; background: var(--accent); }
+.dist-range::-moz-range-thumb { width: 22px; height: 22px; border-radius: 50%; background: #fff; border: 3px solid var(--accent); box-shadow: 0 3px 10px rgba(25, 40, 70, 0.35); }
+.dist-range:focus-visible::-moz-range-thumb { box-shadow: 0 0 0 4px rgba(47, 127, 200, 0.35); }
+/* 距離の数値: 大きな太字。そのまま書き換えられる */
+.dist-value { align-items: baseline; }
+.dist-value input { width: 64px; font-size: 26px; font-weight: 700; border: 0; border-bottom: 1.5px dashed var(--line-2); border-radius: 0; background: transparent; padding: 0 2px; text-align: right; color: var(--ink); -moz-appearance: textfield; }
+.dist-value input::-webkit-outer-spin-button, .dist-value input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.dist-value input:focus { border-bottom-color: var(--accent); outline: none; }
+.dist-value .unit { font-size: 14px; font-weight: 600; color: var(--ink-2); min-width: 0; }
+.bar-pop.is-anchored { position: absolute; bottom: 76px; max-height: min(58vh, 540px); }
 .bar-pop { width: min(400px, 100%); max-height: min(62vh, calc(100% - 150px)); overflow: auto; padding: 12px 16px 14px; }
 .pop-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
 .pop-title { margin: 0; font-weight: 700; font-size: 13.5px; }
@@ -278,7 +294,7 @@ a { color: var(--accent); }
 .guide-pos { position: absolute; width: 320px; z-index: 5; pointer-events: auto; }
 .toast-region { position: absolute; left: 50%; top: 84px; transform: translateX(-50%); display: grid; gap: 8px; z-index: 6; width: min(460px, calc(100% - 32px)); pointer-events: none; }
 .toast-region > * { pointer-events: auto; }
-.maplibregl-ctrl-bottom-right { margin: 0 16px 92px 0; }
+.maplibregl-ctrl-bottom-right { margin: 0 16px 116px 0; }
 .maplibregl-ctrl-attrib { border-radius: 0 10px 0 0; }
 
 /* ---------- スマホ ---------- */
@@ -289,17 +305,19 @@ a { color: var(--accent); }
 .is-mobile .top-right { position: static; width: auto; }
 .is-mobile .stats-chip { position: absolute; top: 58px; left: 10px; font-size: 12px; padding: 6px 12px; gap: 8px; }
 .is-mobile .groups-pop { position: absolute; top: 100px; left: 10px; right: 10px; width: auto; max-height: calc(100% - 190px); }
-.is-mobile .float-card { position: absolute; left: 10px; right: 10px; bottom: 112px; width: auto; max-height: 44%; }
+.is-mobile .float-card { position: absolute; left: 10px; right: 10px; bottom: 128px; width: auto; max-height: 44%; }
 .is-mobile .bottom { bottom: 10px; padding: 0 8px; }
 .is-mobile .control-bar { width: 100%; flex-wrap: wrap; justify-content: space-between; border-radius: 22px; gap: 4px 2px; overflow: visible; padding: 6px 6px 6px; }
 .is-mobile .bar-distance { order: -1; width: 100%; padding: 2px 8px 0; }
-.is-mobile .bar-distance input[type='range'] { flex: 1; width: auto; min-width: 0; }
+.is-mobile .dist-main { flex: 1; min-width: 0; }
+.is-mobile .dist-range { width: 100%; }
+.is-mobile .dist-value input { font-size: 22px; width: 54px; }
 .is-mobile .control-bar .bar-sep { display: none; }
 .is-mobile .bar-button { padding: 6px 7px; font-size: 12.5px; }
 .is-mobile .bar-more { padding: 6px 9px; }
 .is-mobile .bar-button .bar-label { display: none; }
 .is-mobile .control-bar .view-toggle button { padding: 4px 8px; font-size: 12.5px; }
-.is-mobile .maplibregl-ctrl-bottom-left { bottom: 104px; }
+.is-mobile .maplibregl-ctrl-bottom-left { bottom: 120px; }
 .is-mobile .maplibregl-ctrl-attrib { border-radius: 0 8px 8px 0; }
 .is-mobile .bar-pop { max-height: calc(100% - 140px); }
 .is-mobile .guide-pos { width: min(320px, calc(100% - 24px)); }

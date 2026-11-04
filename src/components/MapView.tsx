@@ -248,14 +248,16 @@ export function MapView(props: Props) {
     });
     map.touchZoomRotate.disableRotation();
     map.keyboard.disableRotation();
-    map.addControl(new maplibregl.AttributionControl({ compact: false, customAttribution: DATA_ATTRIBUTION }), 'bottom-left');
+    // スマホでは出典を折りたたむ (全文は「この地図とデータについて」にもある)
+    const narrow = window.matchMedia('(max-width: 760px)').matches;
+    map.addControl(new maplibregl.AttributionControl({ compact: narrow, customAttribution: DATA_ATTRIBUTION }), 'bottom-left');
     map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'bottom-right');
     mapRef.current = map;
 
     let tileErrors = 0;
     map.on('error', (e) => {
       const src = (e as unknown as { sourceId?: string }).sourceId;
-      if (src === 'gsi' || src === 'dem') {
+      if (src === 'gsi' || src === 'dem' || src === 's2' || src === 'photo') {
         tileErrors++;
         if (tileErrors >= 6) cb.current.onError('背景地図の一部を読み込めませんでした。観光資源の点とまとまりは表示できます。');
       }
@@ -267,7 +269,8 @@ export function MapView(props: Props) {
       }
     });
 
-    map.on('load', () => {
+    // データのレイヤは地図の設定が読めた時点で載せる (背景タイルの読み込みを待たない)
+    const onStyleReady = () => {
       addRailLayers(map, T, cb.current.showRail, cb.current.showRailHistory);
       map.addSource('members', { type: 'geojson', data: EMPTY });
       map.addSource('points', { type: 'geojson', data: EMPTY });
@@ -387,7 +390,9 @@ export function MapView(props: Props) {
       loaded.current = true;
       render();
       cb.current.onReady(map);
-    });
+    };
+    if (map.isStyleLoaded()) onStyleReady();
+    else map.once('style.load', onStyleReady);
 
     map.on('click', (e) => {
       const r = 7;
