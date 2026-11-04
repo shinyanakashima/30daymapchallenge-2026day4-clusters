@@ -22,10 +22,12 @@ export interface ExportInfo {
   showAirports: boolean;
   showRail: boolean;
   theme: MapThemeName;
+  edition: '2014' | '2010';
 }
 
 const FONT = '"Hiragino Sans", "Noto Sans JP", "Yu Gothic", "Meiryo", sans-serif';
-const DATA_CREDIT = '出典：国土数値情報（観光資源）国土交通省／基準日 2014年9月30日／非商用利用';
+const DATA_CREDIT_2014 = '出典：国土数値情報（観光資源 第2.2版）国土交通省／基準日 2014年9月30日／非商用利用';
+const DATA_CREDIT_2010 = '出典：国土数値情報（観光資源 第2.0版）国土交通省／2010年度作成（比較用）／非商用利用';
 const TILE_CREDIT = '背景：地理院ベクトルタイル（海岸線・道路）／地形：Terrain Tiles（Mapzen ほか）';
 
 /** 地図キャンバスを 1 フレーム描画させてから取り出す (preserveDrawingBuffer 不要)。 */
@@ -226,7 +228,7 @@ export async function exportPng(
   ctx.fillStyle = SUB;
   ctx.font = `${11 * s}px ${FONT}`;
   ctx.fillText('まとまりは代表位置間の距離による分類で、交通アクセスや周遊実績を示すものではありません。', 20 * s, fy + 50 * s);
-  ctx.fillText(info.userCount ? `${DATA_CREDIT}＋利用者の追加データ ${info.userCount} 地点` : DATA_CREDIT, 20 * s, fy + 70 * s);
+  ctx.fillText((() => { const c = info.edition === '2010' ? DATA_CREDIT_2010 : DATA_CREDIT_2014; return info.userCount ? `${c}＋利用者の追加データ ${info.userCount} 地点` : c; })(), 20 * s, fy + 70 * s);
   const tile = mapCanvas ? TILE_CREDIT : '背景地図は取得できなかったため省略';
   ctx.fillText(tile, 20 * s, fy + 88 * s);
   const overlays = [info.showEki ? '道の駅（2018年）' : '', info.showAirports ? '空港（2021年）' : '', info.showRail ? '鉄道（鉄道時系列 2025年度版）' : ''].filter(Boolean);

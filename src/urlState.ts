@@ -1,4 +1,4 @@
-import type { AppSettings, CategorySel, GroupKey, MapPos } from './types';
+import type { AppSettings, CategorySel, Edition, GroupKey, MapPos } from './types';
 
 export const SCHEMA_VERSION = '1';
 export const EPS_MIN = 1;
@@ -7,7 +7,11 @@ export const MINPTS_MIN = 2;
 export const MINPTS_MAX = 10;
 export const TITLE_MAX = 40;
 
+/** 版ごとの距離の初期値 (README の比較表から選んだ値) */
+export const DEFAULT_EPS: Record<Edition, number> = { '2014': 40, '2010': 25 };
+
 export const DEFAULTS: AppSettings = {
+  edition: '2014',
   epsKm: 40,
   minPts: 3,
   cat: { type: 'all' },
@@ -63,12 +67,18 @@ function parseMap(raw: string | null): MapPos | null {
   return { lon, lat, zoom };
 }
 
+/** URL の版 (ed)。未知の値は 2014。 */
+export function parseEdition(search: string): Edition {
+  return new URLSearchParams(search).get('ed') === '2010' ? '2010' : '2014';
+}
+
 /** URL から設定を読む。未知・不正な値はその項目だけ初期値に戻す。 */
 export function parseSettings(search: string, validKinds: ReadonlySet<string>, validIds: ReadonlySet<number>): AppSettings {
   const q = new URLSearchParams(search);
   const s: AppSettings = { ...DEFAULTS, cat: DEFAULTS.cat };
   if (q.get('v') !== SCHEMA_VERSION) return s;
-  s.epsKm = intIn(q.get('d'), EPS_MIN, EPS_MAX) ?? DEFAULTS.epsKm;
+  s.edition = parseEdition(search);
+  s.epsKm = intIn(q.get('d'), EPS_MIN, EPS_MAX) ?? DEFAULT_EPS[s.edition];
   s.minPts = intIn(q.get('m'), MINPTS_MIN, MINPTS_MAX) ?? DEFAULTS.minPts;
   s.cat = parseCategory(q.get('c'), validKinds) ?? DEFAULTS.cat;
   const sel = intIn(q.get('s'), 0, 999999999);
@@ -91,6 +101,7 @@ export function parseSettings(search: string, validKinds: ReadonlySet<string>, v
 export function serializeSettings(s: AppSettings): string {
   const q = new URLSearchParams();
   q.set('v', SCHEMA_VERSION);
+  if (s.edition !== '2014') q.set('ed', s.edition);
   q.set('d', String(s.epsKm));
   q.set('m', String(s.minPts));
   q.set('c', serializeCategory(s.cat));

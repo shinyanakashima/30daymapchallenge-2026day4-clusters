@@ -28,3 +28,22 @@ describe('配信データ', () => {
     }
   });
 });
+
+describe('配信データ (2010年度版・比較用)', () => {
+  const gj10 = JSON.parse(readFileSync('public/data/resources-2010.geojson', 'utf8'));
+  const m10 = JSON.parse(readFileSync('public/data/manifest-2010.json', 'utf8'));
+  const c10 = JSON.parse(readFileSync('public/data/categories-2010.json', 'utf8'));
+  it('件数が manifest と一致し、除外理由が記録されている', () => {
+    expect(gj10.features.length).toBe(m10.stats.validPoints);
+    expect(m10.stats.totalRecords - m10.excludedRecords.length).toBe(m10.stats.validPoints);
+    expect(m10.excludedRecords.every((e: { reason: string }) => e.reason.length > 0)).toBe(true);
+  });
+  it('ID は 2014年版と重ならず一意、自治体名がすべて引けている', () => {
+    const ids = gj10.features.map((f: { properties: { id: number } }) => f.properties.id);
+    expect(new Set(ids).size).toBe(ids.length);
+    expect(Math.min(...ids)).toBeGreaterThan(20000);
+    expect(m10.stats.unknownMunicipalityCodes).toEqual([]);
+    const keys = new Set(c10.kinds.map((k: { key: string }) => k.key));
+    for (const f of gj10.features) expect(keys.has(f.properties.kindKey)).toBe(true);
+  });
+});

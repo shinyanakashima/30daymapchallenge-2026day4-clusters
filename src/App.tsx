@@ -3,8 +3,8 @@ import type { Map as MLMap } from 'maplibre-gl';
 import { loadData, type LoadedData } from './data';
 import { DistanceIndex } from './lib/geo';
 import { computeClusters, nearestOf, selectIds, type Computed, type Group } from './model';
-import { cleanTitle, DEFAULTS, parseSettings, serializeSettings } from './urlState';
-import type { AppSettings, CategorySel, MapPos } from './types';
+import { cleanTitle, DEFAULTS, parseEdition, parseSettings, serializeSettings } from './urlState';
+import type { AppSettings, CategorySel, Edition, MapPos } from './types';
 import { MapView } from './components/MapView';
 import { Panel } from './components/Panel';
 import { exportPng } from './exportPng';
@@ -30,17 +30,19 @@ export default function App() {
   const [data, setData] = useState<LoadedData | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
+  const [edition, setEdition] = useState<Edition>(() => parseEdition(window.location.search));
 
   useEffect(() => {
     let alive = true;
     setLoadError(null);
-    loadData()
+    setData(null);
+    loadData(edition)
       .then((d) => alive && setData(d))
       .catch((e: unknown) => alive && setLoadError(e instanceof Error ? e.message : String(e)));
     return () => {
       alive = false;
     };
-  }, [attempt]);
+  }, [attempt, edition]);
 
   if (loadError) {
     return (
@@ -60,7 +62,7 @@ export default function App() {
       </div>
     );
   }
-  return <Explorer data={data} />;
+  return <Explorer key={edition} data={data} onEdition={setEdition} />;
 }
 
 function useIsMobile() {
@@ -96,7 +98,7 @@ function mergeData(base: LoadedData, imported: ImportedSet | null): LoadedData {
   };
 }
 
-function Explorer({ data: baseData }: { data: LoadedData }) {
+function Explorer({ data: baseData, onEdition }: { data: LoadedData; onEdition: (e: Edition) => void }) {
   const [imported, setImported] = useState<ImportedSet | null>(() => loadStoredImport());
   const data = useMemo(() => mergeData(baseData, imported), [baseData, imported]);
   const { resources } = data;
@@ -220,6 +222,14 @@ function Explorer({ data: baseData }: { data: LoadedData }) {
     writeGuideClosed();
   };
 
+  // 版の切り替え: 距離・最小地点数・地図位置などは保ち、版ごとに異なる選択と種別指定だけ外す
+  const switchEdition = (ed: Edition) => {
+    if (ed === settings.edition) return;
+    const next: AppSettings = { ...settings, edition: ed, sel: null, cat: settings.cat.type === 'kinds' ? { type: 'all' } : settings.cat };
+    window.history.replaceState(null, '', `${window.location.pathname}?${serializeSettings(next)}`);
+    onEdition(ed);
+  };
+
   const share = async () => {
     const url = `${window.location.origin}${window.location.pathname}?${serializeSettings(settings)}`;
     try {
@@ -246,6 +256,7 @@ function Explorer({ data: baseData }: { data: LoadedData }) {
       showAirports: settings.showAirports,
       showRail: settings.showRail,
       theme: settings.theme,
+      edition: settings.edition,
     });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(res.blob);
@@ -317,6 +328,7 @@ function Explorer({ data: baseData }: { data: LoadedData }) {
         categoryLabel={categoryLabel(settings.cat, data)}
         imported={imported}
         onImport={applyImport}
+        onEdition={switchEdition}
       />
       <div className="toast-region" aria-live="polite">
         {notice && (

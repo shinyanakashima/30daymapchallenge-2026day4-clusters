@@ -1,0 +1,118 @@
+{
+  "title": "北海道、旅のまとまりを探して。配信データ (2010年度版・比較用)",
+  "edition": "2010",
+  "source": {
+    "name": "国土数値情報 観光資源データ 第2.0版 (P12-10) 全国から北海道を抽出",
+    "publisher": "国土交通省 国土政策局",
+    "downloadUrl": "https://nlftp.mlit.go.jp/ksj/gml/data/P12/P12-10/P12-10_GML.zip",
+    "pageUrl": "https://nlftp.mlit.go.jp/ksj/gml/datalist/KsjTmplt-P12-v2_0.html",
+    "referenceDate": "2010年度 (平成22年度) 作成",
+    "fetchedAt": "2026-11-04",
+    "license": "非商用 (配布ページの使用許諾条件)",
+    "licenseUrl": "https://nlftp.mlit.go.jp/ksj/other/agreement.html",
+    "municipalityCodes": "https://nlftp.mlit.go.jp/ksj/gml/codelist/AdminiBoundary_CD.xlsx"
+  },
+  "layerUsed": "P12-10-g_TourismResource_Point.shp (観光資源・点)。線・面は二重計数を避けるため使わない",
+  "fields": [
+    {
+      "name": "P12_001",
+      "type": "C",
+      "length": 14
+    },
+    {
+      "name": "P12_002",
+      "type": "C",
+      "length": 29
+    },
+    {
+      "name": "P12_003",
+      "type": "C",
+      "length": 52
+    },
+    {
+      "name": "P12_004",
+      "type": "C",
+      "length": 16
+    }
+  ],
+  "fieldMapping": {
+    "P12_001": "都道府県コード",
+    "P12_002": "行政区域コード (01 で始まるものを北海道として抽出)",
+    "P12_003": "name (名称)",
+    "P12_004": "kind (種別)"
+  },
+  "idRule": "(行政区域コード, 名称, 経度, 緯度) の順に並べて 20001 から付番。第2.0版には観光資源 ID がない",
+  "crs": {
+    "output": "EPSG:4326",
+    "transform": "地理座標をそのまま EPSG:4326 として扱い、小数第7位で丸めた"
+  },
+  "stats": {
+    "nationwideRecords": 2019,
+    "totalRecords": 144,
+    "validPoints": 141,
+    "excluded": 3,
+    "sameCoordinateGroups": [],
+    "sameNameGroups": [],
+    "unknownMunicipalityCodes": [],
+    "bbox": [
+      139.4664828,
+      41.4299358,
+      145.8166164,
+      45.521337
+    ],
+    "byKind": {
+      "山岳": 19,
+      "高原": 5,
+      "原野": 3,
+      "湿原": 7,
+      "湖沼": 22,
+      "河川": 2,
+      "峡谷": 2,
+      "滝": 5,
+      "海岸": 7,
+      "岬": 9,
+      "島": 5,
+      "岩石・洞窟": 3,
+      "動物": 7,
+      "植物": 18,
+      "自然現象": 2,
+      "社寺": 3,
+      "城跡・城郭": 2,
+      "庭園・公園": 1,
+      "歴史景観": 2,
+      "地域景観": 6,
+      "年中行事": 3,
+      "建造物": 5,
+      "博物館・美術館": 2,
+      "動植物園・水族館": 1
+    },
+    "byGroup": {
+      "自然資源": 116,
+      "人文資源": 25,
+      "未分類": 0
+    }
+  },
+  "excludedRecords": [
+    {
+      "index": 1312,
+      "name": "五色ヶ原",
+      "reason": "北海道の行政区域コードだが座標が北海道の外（同名の本州の資源の座標と見られる。北海道側のレコードは別にある）"
+    },
+    {
+      "index": 1370,
+      "name": "駒ヶ岳",
+      "reason": "北海道の行政区域コードだが座標が北海道の外（同名の本州の資源の座標と見られる。北海道側のレコードは別にある）"
+    },
+    {
+      "index": 1543,
+      "name": "大沼",
+      "reason": "北海道の行政区域コードだが座標が北海道の外（同名の本州の資源の座標と見られる。北海道側のレコードは別にある）"
+    }
+  ],
+  "notes": [
+    "比較用の古い版。2010年度の作成で、現在の状況を示さない。",
+    "第2.2版 (2014年) とは種別名・収録基準が異なり、件数をそのまま比べられない。",
+    "自治体名は行政区域コード表 (令和6年1月1日現在、廃止コードを含む) の名称。"
+  ],
+  "generatedAt": "2026-11-04"
+}

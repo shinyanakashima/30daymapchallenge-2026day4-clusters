@@ -4,7 +4,8 @@ import { readFile } from 'node:fs/promises';
 import { DistanceIndex } from '../src/lib/geo.ts';
 import { dbscan } from '../src/lib/dbscan.ts';
 
-const gj = JSON.parse(await readFile('public/data/resources.geojson', 'utf8'));
+const file = process.env.RESOURCES ?? 'public/data/resources.geojson';
+const gj = JSON.parse(await readFile(file, 'utf8'));
 const pts = gj.features.map((f) => ({ id: f.properties.id, lon: f.geometry.coordinates[0], lat: f.geometry.coordinates[1], name: f.properties.name, group: f.properties.kindKey }));
 const name = new Map(pts.map((p) => [p.id, p.name]));
 const idx = new DistanceIndex(pts);

@@ -113,7 +113,7 @@ export const TILE_ATTRIBUTION =
   '<a href="https://maps.gsi.go.jp/development/vt.html" target="_blank" rel="noopener">地理院ベクトルタイル</a>' +
   '｜地形 <a href="https://github.com/tilezen/joerd/blob/master/docs/attribution.md" target="_blank" rel="noopener">Terrain Tiles (Mapzen ほか)</a>';
 export const DATA_ATTRIBUTION =
-  '<a href="https://nlftp.mlit.go.jp/ksj/gml/datalist/KsjTmplt-P12-v2_2.html" target="_blank" rel="noopener">国土数値情報（観光資源 2014年・道の駅 2018年・空港 2021年・鉄道時系列 2025年度版）国土交通省</a>';
+  '<a href="https://nlftp.mlit.go.jp/ksj/gml/datalist/KsjTmplt-P12-v2_2.html" target="_blank" rel="noopener">国土数値情報（観光資源・道の駅・空港・鉄道時系列）国土交通省</a>';
 
 export const HOKKAIDO_BOUNDS: [[number, number], [number, number]] = [
   [139.3, 41.3],

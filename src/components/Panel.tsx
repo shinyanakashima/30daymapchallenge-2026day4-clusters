@@ -34,6 +34,7 @@ interface Props {
   categoryLabel: string;
   imported: ImportedSet | null;
   onImport: (set: ImportedSet | null) => void;
+  onEdition: (e: '2014' | '2010') => void;
 }
 
 const reducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -317,6 +318,27 @@ export function Panel(p: Props) {
           </div>
         )}
 
+        <div className="block">
+          <p className="field-label">観光資源データの版</p>
+          <div className="seg" role="radiogroup" aria-label="観光資源データの版">
+            {(
+              [
+                ['2014', '2014年版'],
+                ['2010', '2010年版'],
+              ] as const
+            ).map(([key, label]) => (
+              <button key={key} type="button" role="radio" aria-checked={settings.edition === key} onClick={() => p.onEdition(key)}>
+                {label}
+              </button>
+            ))}
+          </div>
+          <p className="field-hint">
+            {settings.edition === '2014'
+              ? '国土数値情報 第2.2版（基準日 2014年9月30日）。北海道は35地点です。'
+              : '比較用の古い版（第2.0版、2010年度作成）。北海道は141地点で、自然資源が中心です。収録の基準が違うため、件数はそのまま比べられません。'}
+          </p>
+        </div>
+
         {section(
           'distance',
           'block',
@@ -588,14 +610,14 @@ function About({ data }: { data: LoadedData }) {
   return (
     <footer className="about">
       <p>
-        北海道では、観光客の地域偏在や、二次交通による周遊のしづらさが課題とされています。この地図では2014年版の観光資源データを距離でグループ化し、行政界を越えた「一緒に巡る候補」を探ります。まとまりは代表位置間の距離に基づくもので、実際の交通アクセスや周遊実績を示すものではありません。
+        北海道では、観光客の地域偏在や、二次交通による周遊のしづらさが課題とされています。この地図では{data.manifest.edition === '2010' ? '2010年度版（比較用）' : '2014年版'}の観光資源データを距離でグループ化し、行政界を越えた「一緒に巡る候補」を探ります。まとまりは代表位置間の距離に基づくもので、実際の交通アクセスや周遊実績を示すものではありません。
       </p>
       <p className="credit">
         出典：
         <a href={s.pageUrl} target="_blank" rel="noopener">
-          国土数値情報（観光資源）第2.2版
+          国土数値情報（観光資源）{data.manifest.edition === '2010' ? '第2.0版' : '第2.2版'}
         </a>
-        （国土交通省、基準日 2014年9月30日、北海道 {data.manifest.stats.validPoints} 地点）。利用条件：
+        （国土交通省、{data.manifest.edition === '2010' ? '2010年度作成' : '基準日 2014年9月30日'}、北海道 {data.manifest.stats.validPoints} 地点）。利用条件：
         <a href={s.licenseUrl} target="_blank" rel="noopener">
           非商用
         </a>

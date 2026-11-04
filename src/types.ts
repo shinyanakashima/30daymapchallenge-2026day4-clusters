@@ -31,6 +31,7 @@ export interface Categories {
 }
 
 export interface Manifest {
+  edition?: Edition;
   source: {
     name: string;
     publisher: string;
@@ -59,7 +60,11 @@ export interface MapPos {
   zoom: number;
 }
 
+export type Edition = '2014' | '2010';
+
 export interface AppSettings {
+  /** 観光資源データの版 */
+  edition: Edition;
   epsKm: number;
   minPts: number;
   cat: CategorySel;

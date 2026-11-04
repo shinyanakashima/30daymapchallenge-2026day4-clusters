@@ -1,4 +1,4 @@
-import type { Categories, GroupKey, Manifest, Resource } from './types';
+import type { Categories, Edition, GroupKey, Manifest, Resource } from './types';
 
 export interface LoadedData {
   resources: Resource[];
@@ -28,12 +28,14 @@ interface RawFeature {
   properties: Omit<Resource, 'lon' | 'lat' | 'group'>;
 }
 
-export async function loadData(): Promise<LoadedData> {
+export async function loadData(edition: Edition = '2014'): Promise<LoadedData> {
+  const suffix = edition === '2014' ? '' : `-${edition}`;
   const [gj, categories, manifest] = await Promise.all([
-    getJson<{ features: RawFeature[] }>('data/resources.geojson'),
-    getJson<Categories>('data/categories.json'),
-    getJson<Manifest>('data/manifest.json'),
+    getJson<{ features: RawFeature[] }>(`data/resources${suffix}.geojson`),
+    getJson<Categories>(`data/categories${suffix}.json`),
+    getJson<Manifest>(`data/manifest${suffix}.json`),
   ]);
+  manifest.edition = edition;
   const groupOf = new Map<string, GroupKey>(categories.kinds.map((k) => [k.key, k.group]));
   const resources = gj.features
     .map((f) => ({
