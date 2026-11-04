@@ -87,16 +87,18 @@ export function MapView(props: Props) {
             'heatmap-weight': 1,
             'heatmap-intensity': 1,
             'heatmap-radius': radius,
+            // 輪郭線は付けず、縁をぼかした一様な塗りにする
             'heatmap-color': [
-              'step', ['heatmap-density'],
-              'rgba(0,0,0,0)',
-              BLOB_THRESHOLD, hexToRgba(hex, 0.34),
-              BLOB_THRESHOLD * 1.5, hexToRgba(hex, 0.2),
+              'interpolate', ['linear'], ['heatmap-density'],
+              0, 'rgba(0,0,0,0)',
+              BLOB_THRESHOLD * 0.6, hexToRgba(hex, 0),
+              BLOB_THRESHOLD * 1.4, hexToRgba(hex, 0.24),
+              1, hexToRgba(hex, 0.26),
             ],
           },
         });
       });
-      // 選択中のまとまりは、にじみの縁に濃い輪郭を重ねる (色以外の強調)
+      // 選択中のまとまりは、にじみ全体を少し濃くする (色以外の強調)
       map.addLayer({
         id: 'blob-selected',
         type: 'heatmap',
@@ -107,10 +109,11 @@ export function MapView(props: Props) {
           'heatmap-intensity': 1,
           'heatmap-radius': radius,
           'heatmap-color': [
-            'step', ['heatmap-density'],
-            'rgba(0,0,0,0)',
-            BLOB_THRESHOLD, hexToRgba(INK, 0.9),
-            BLOB_THRESHOLD * 1.25, 'rgba(0,0,0,0)',
+            'interpolate', ['linear'], ['heatmap-density'],
+            0, 'rgba(0,0,0,0)',
+            BLOB_THRESHOLD * 0.6, hexToRgba(INK, 0),
+            BLOB_THRESHOLD * 1.4, hexToRgba(INK, 0.1),
+            1, hexToRgba(INK, 0.1),
           ],
         },
       });
@@ -129,8 +132,8 @@ export function MapView(props: Props) {
         paint: {
           'circle-radius': ['match', ['get', 'state'], 'member', 5, 'noise', 4.5, 4.5],
           'circle-color': ['match', ['get', 'state'], 'noise', PAPER, ['get', 'color']],
-          'circle-stroke-color': ['match', ['get', 'state'], 'noise', NOISE_STROKE, '#ffffff'],
-          'circle-stroke-width': ['match', ['get', 'state'], 'noise', 1.8, 1.4],
+          'circle-stroke-color': ['case', ['==', ['get', 'inSelected'], 1], INK, ['match', ['get', 'state'], 'noise', NOISE_STROKE, '#ffffff']],
+          'circle-stroke-width': ['case', ['==', ['get', 'inSelected'], 1], 2, ['match', ['get', 'state'], 'noise', 1.8, 1.4]],
         },
       });
       map.addLayer({
@@ -214,7 +217,7 @@ export function MapView(props: Props) {
       return {
         type: 'Feature',
         geometry: { type: 'Point', coordinates: [r.lon, r.lat] },
-        properties: { id: r.id, state, color, selected: r.id === selectedId ? 1 : 0 },
+        properties: { id: r.id, state, color, selected: r.id === selectedId ? 1 : 0, inSelected: g && g === selectedGroup ? 1 : 0 },
       };
     });
     const memberFeatures: GeoJSON.Feature[] = [];
