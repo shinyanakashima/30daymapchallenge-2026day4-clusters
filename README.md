@@ -134,7 +134,7 @@ npm test && npm run build   # 検証とビルド（dist/ に出力）
 
 公開先：https://shinyanakashima.github.io/30daymapchallenge-2026day4-clusters/
 
-`main` に push すると GitHub Actions（`.github/workflows/deploy.yml`）がテスト・ビルドし、`dist/` を `gh-pages` ブランチへ出力する。Pages の公開元は `gh-pages` ブランチのルート。
+`main` に push すると GitHub Actions（`.github/workflows/deploy.yml`）がテスト・ビルドし、`dist/` を GitHub Pages へデプロイする（Pages の公開元は「GitHub Actions」）。
 
 ### 構成
 
