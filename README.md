@@ -12,8 +12,6 @@
 
 アプリ：https://shinyanakashima.github.io/30daymapchallenge-2026day4-clusters/
 
-<video src="https://github.com/shinyanakashima/30daymapchallenge-2026day4-clusters/raw/main/media/30daymapchallenge-d4.mp4" controls muted width="720"></video>
-
 動画ファイル：[media/30daymapchallenge-d4.mp4](media/30daymapchallenge-d4.mp4)（LinkedIn 投稿用に収録したもの）
 
 ## データ
