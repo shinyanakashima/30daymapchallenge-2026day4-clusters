@@ -8,6 +8,12 @@
 
 > 北海道では、観光客の地域偏在や、二次交通による周遊のしづらさが課題とされています。この地図では2014年版の観光資源データを距離でグループ化し、行政界を越えた「一緒に巡る候補」を探ります。まとまりは代表位置間の距離に基づくもので、実際の交通アクセスや周遊実績を示すものではありません。
 
+## Demo
+
+アプリ：https://shinyanakashima.github.io/30daymapchallenge-2026day4-clusters/
+
+動画ファイル：[media/30daymapchallenge-d4.mp4](media/30daymapchallenge-d4.mp4)（LinkedIn 投稿用に収録したもの）
+
 ## データ
 
 | 項目 | 内容 |
